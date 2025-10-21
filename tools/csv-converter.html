@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Converter - Quick Tools</title>
+  <link rel="stylesheet" href="../assets/css/brand.css">
+  <style>
+    .tool-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .preview-section {
+      margin-top: var(--spacing-lg);
+    }
+
+    .preview-box {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      max-height: 300px;
+      overflow: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .stats {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .actions {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+      flex-wrap: wrap;
+    }
+
+    .actions button {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-radius: var(--radius-md);
+      color: #065f46;
+      margin-top: var(--spacing-md);
+    }
+
+    .file-info-icon {
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="logo">
+        <span>⚡</span>
+        <span>Quick Tools</span>
+      </a>
+      <a href="../index.html" style="color: var(--text-secondary); text-decoration: none;">← Back</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="tool-container">
+      <h1 class="page-title">📊 CSV Converter</h1>
+      <p class="page-subtitle">Convert semicolon-separated CSV files to comma-separated format</p>
+
+      <!-- Upload Section -->
+      <div class="card">
+        <h3 style="margin-bottom: var(--spacing-md); color: var(--text-primary);">Upload Your File</h3>
+
+        <div class="file-upload-area" id="dropZone">
+          <div class="file-upload-icon">📁</div>
+          <p style="font-size: 1.125rem; font-weight: 500; margin-bottom: var(--spacing-xs);">
+            Drop your CSV file here
+          </p>
+          <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+            or click to browse
+          </p>
+          <input type="file" id="fileInput" accept=".csv,.txt" style="display: none;">
+          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+            Choose File
+          </button>
+        </div>
+
+        <div id="fileInfo" class="file-info hidden">
+          <span class="file-info-icon">✅</span>
+          <div>
+            <strong id="fileName"></strong>
+            <div style="font-size: 0.875rem; opacity: 0.8;" id="fileSize"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Section -->
+      <div id="statsSection" class="hidden">
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-label">Rows</div>
+            <div class="stat-value" id="rowCount">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Columns</div>
+            <div class="stat-value" id="colCount">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Format</div>
+            <div class="stat-value" style="font-size: 1.125rem;" id="formatType">N/A</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div id="previewSection" class="preview-section hidden">
+        <div class="card">
+          <h3 style="margin-bottom: var(--spacing-md); color: var(--text-primary);">
+            Original (First 5 Rows)
+          </h3>
+          <div class="preview-box" id="originalPreview"></div>
+        </div>
+
+        <div class="card" style="margin-top: var(--spacing-md);">
+          <h3 style="margin-bottom: var(--spacing-md); color: var(--text-primary);">
+            Converted (First 5 Rows)
+          </h3>
+          <div class="preview-box" id="convertedPreview"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+          <button class="btn btn-primary" id="downloadBtn">
+            ⬇️ Download Converted CSV
+          </button>
+          <button class="btn btn-secondary" id="copyBtn">
+            📋 Copy to Clipboard
+          </button>
+          <button class="btn btn-secondary" id="resetBtn">
+            🔄 Convert Another File
+          </button>
+        </div>
+      </div>
+
+      <!-- Alert Area -->
+      <div id="alertArea"></div>
+
+    </div>
+  </main>
+
+  <script>
+    // State
+    let originalContent = '';
+    let convertedContent = '';
+    let currentFileName = '';
+
+    // Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const statsSection = document.getElementById('statsSection');
+    const previewSection = document.getElementById('previewSection');
+    const originalPreview = document.getElementById('originalPreview');
+    const convertedPreview = document.getElementById('convertedPreview');
+    const rowCount = document.getElementById('rowCount');
+    const colCount = document.getElementById('colCount');
+    const formatType = document.getElementById('formatType');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const alertArea = document.getElementById('alertArea');
+
+    // File Upload Handlers
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    // Handle File
+    function handleFile(file) {
+      if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {
+        showAlert('Please upload a CSV or TXT file', 'error');
+        return;
+      }
+
+      currentFileName = file.name;
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        originalContent = e.target.result;
+        processFile();
+      };
+
+      reader.onerror = () => {
+        showAlert('Error reading file', 'error');
+      };
+
+      reader.readAsText(file);
+
+      // Show file info
+      fileInfo.classList.remove('hidden');
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+    }
+
+    // Process and Convert File
+    function processFile() {
+      try {
+        // Detect delimiter
+        const firstLine = originalContent.split('\n')[0];
+        const semicolonCount = (firstLine.match(/;/g) || []).length;
+        const commaCount = (firstLine.match(/,/g) || []).length;
+
+        let needsConversion = semicolonCount > commaCount;
+
+        // Convert semicolons to commas
+        if (needsConversion) {
+          convertedContent = originalContent.replace(/;/g, ',');
+          formatType.textContent = '; → ,';
+        } else {
+          convertedContent = originalContent;
+          formatType.textContent = 'Already ,';
+          showAlert('File is already comma-separated. No conversion needed.', 'success');
+        }
+
+        // Calculate stats
+        const lines = originalContent.split('\n').filter(line => line.trim());
+        const columns = lines[0] ? lines[0].split(needsConversion ? ';' : ',').length : 0;
+
+        rowCount.textContent = lines.length;
+        colCount.textContent = columns;
+
+        // Show previews
+        originalPreview.textContent = getPreview(originalContent, 5);
+        convertedPreview.textContent = getPreview(convertedContent, 5);
+
+        // Show sections
+        statsSection.classList.remove('hidden');
+        previewSection.classList.remove('hidden');
+
+      } catch (error) {
+        showAlert('Error processing file: ' + error.message, 'error');
+      }
+    }
+
+    // Get Preview (first N lines)
+    function getPreview(content, lines) {
+      return content.split('\n').slice(0, lines).join('\n');
+    }
+
+    // Download Converted File
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([convertedContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentFileName.replace('.csv', '_converted.csv');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showAlert('File downloaded successfully!', 'success');
+    });
+
+    // Copy to Clipboard
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(convertedContent);
+        showAlert('Copied to clipboard!', 'success');
+      } catch (error) {
+        showAlert('Failed to copy to clipboard', 'error');
+      }
+    });
+
+    // Reset
+    resetBtn.addEventListener('click', () => {
+      originalContent = '';
+      convertedContent = '';
+      currentFileName = '';
+      fileInput.value = '';
+      fileInfo.classList.add('hidden');
+      statsSection.classList.add('hidden');
+      previewSection.classList.add('hidden');
+      alertArea.innerHTML = '';
+    });
+
+    // Show Alert
+    function showAlert(message, type) {
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+      alertArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+      setTimeout(() => {
+        alertArea.innerHTML = '';
+      }, 5000);
+    }
+
+    // Format File Size
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' bytes';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  </script>
+
+</body>
+</html>
