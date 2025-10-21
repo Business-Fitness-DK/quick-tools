@@ -392,17 +392,18 @@
 
   <script>
     (function() {
+      const container = document.getElementById('popup-generator-embed');
       let popupCount = 0;
 
-      const pasteScript = document.getElementById('pasteScript');
-      const loadConfigBtn = document.getElementById('loadConfigBtn');
-      const popupsContainer = document.getElementById('popupsContainer');
-      const addPopupBtn = document.getElementById('addPopupBtn');
-      const generateBtn = document.getElementById('generateBtn');
-      const outputSection = document.getElementById('outputSection');
-      const outputCode = document.getElementById('outputCode');
-      const copyBtn = document.getElementById('copyBtn');
-      const alertArea = document.getElementById('alertArea');
+      const pasteScript = container.querySelector('#pasteScript');
+      const loadConfigBtn = container.querySelector('#loadConfigBtn');
+      const popupsContainer = container.querySelector('#popupsContainer');
+      const addPopupBtn = container.querySelector('#addPopupBtn');
+      const generateBtn = container.querySelector('#generateBtn');
+      const outputSection = container.querySelector('#outputSection');
+      const outputCode = container.querySelector('#outputCode');
+      const copyBtn = container.querySelector('#copyBtn');
+      const alertArea = container.querySelector('#alertArea');
 
       // Load existing config from pasted script
       loadConfigBtn.addEventListener('click', () => {
@@ -580,12 +581,12 @@
       }
 
       function removePopup(popupId) {
-        const popup = document.querySelector(`[data-popup-id="${popupId}"]`);
+        const popup = container.querySelector(`[data-popup-id="${popupId}"]`);
         popup.remove();
       }
 
       function addTrigger(popupId, type = 'hash', value = '') {
-        const popupCard = document.querySelector(`[data-popup-id="${popupId}"]`);
+        const popupCard = container.querySelector(`[data-popup-id="${popupId}"]`);
         const triggersContainer = popupCard.querySelector('.popup-triggers');
         const triggerId = Date.now() + Math.random();
 
@@ -624,7 +625,7 @@
       }
 
       function removeTrigger(triggerId) {
-        const trigger = document.querySelector(`[data-trigger-id="${triggerId}"]`);
+        const trigger = container.querySelector(`[data-trigger-id="${triggerId}"]`);
         trigger.remove();
       }
 
@@ -655,7 +656,7 @@
       generateBtn.addEventListener('click', () => {
         const popupConfigs = [];
 
-        document.querySelectorAll('.popup-card').forEach(card => {
+        container.querySelectorAll('.popup-card').forEach(card => {
           const formUrl = card.querySelector('.popup-url').value;
           const brandColor = card.querySelector('.popup-color').value;
           const sizeSelect = card.querySelector('.popup-size').value;
