@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup Test Page</title>
+
+  <!-- Popup Script -->
+  <script src="./openPopup.js"></script>
+
+  <!-- Initialize Multiple Popups -->
+  <script>
+    // Popup 1: Free Trial Form
+    initPopups({
+      formUrl: "https://book.businessandfitness.dk/widget/form/n2qhaRgTmWD0Ij7tF6Rp",
+      brandColor: "#0066FF",
+      width: "auto",
+      height: "auto",
+      triggers: [
+        {type: "hash", value: "free-trial"},
+        {type: "class", value: "open-popup"},
+        {type: "id", value: "test-button"}
+      ]
+    });
+
+    // Popup 2: Contact Form
+    initPopups({
+      formUrl: "https://book.businessandfitness.dk/widget/form/HUU91HaqEaRsQne0FiBJ",
+      brandColor: "#10b981",
+      width: "auto",
+      height: "800",
+      triggers: [
+        {type: "hash", value: "contact"},
+        {type: "class", value: "contact-form"}
+      ]
+    });
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: #FBFBFA;
+      color: #37352F;
+      padding: 60px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      font-size: 1.125rem;
+      color: #787774;
+      margin-bottom: 3rem;
+    }
+
+    .test-section {
+      background: white;
+      border: 1px solid #EDECE9;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 2px rgba(15, 15, 15, 0.1);
+    }
+
+    .test-section h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .test-section p {
+      font-size: 0.9375rem;
+      color: #787774;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.875rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: #0066FF;
+      color: white;
+      border: 1px solid #0066FF;
+    }
+
+    .btn-primary:hover {
+      background: #0052CC;
+      border-color: #0052CC;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #37352F;
+      border: 1px solid #E9E9E7;
+    }
+
+    .btn-secondary:hover {
+      background: #F7F7F6;
+      border-color: #37352F;
+    }
+
+    .btn-link {
+      background: transparent;
+      color: #0066FF;
+      border: none;
+      padding: 0.5rem 1rem;
+      text-decoration: underline;
+    }
+
+    .btn-link:hover {
+      color: #0052CC;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    code {
+      background: #F7F7F6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #0066FF;
+    }
+
+    .note {
+      background: #F7F7F6;
+      border-left: 3px solid #0066FF;
+      padding: 1rem;
+      margin-top: 2rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .note strong {
+      color: #37352F;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Popup Test Page</h1>
+    <p>Test all popup trigger methods to ensure everything works correctly</p>
+
+    <!-- Test 1: Hash Link -->
+    <div class="test-section">
+      <h2>1. Hash Link Trigger (Recommended)</h2>
+      <p>Click a link with <code>#free-trial</code> hash to trigger the popup</p>
+      <div class="button-group">
+        <a href="#free-trial" class="btn btn-primary">Start Free Trial</a>
+        <a href="#free-trial" class="btn btn-secondary">Get Started</a>
+      </div>
+    </div>
+
+    <!-- Test 2: Class Trigger -->
+    <div class="test-section">
+      <h2>2. CSS Class Trigger</h2>
+      <p>Click any element with the <code>.open-popup</code> class</p>
+      <div class="button-group">
+        <button class="btn btn-primary open-popup">Open with Class</button>
+        <a href="#" class="btn btn-secondary open-popup">Link with Class</a>
+      </div>
+    </div>
+
+    <!-- Test 3: ID Trigger -->
+    <div class="test-section">
+      <h2>3. Element ID Trigger</h2>
+      <p>Click the element with ID <code>#test-button</code></p>
+      <div class="button-group">
+        <button id="test-button" class="btn btn-primary">Open with ID</button>
+      </div>
+    </div>
+
+    <!-- Test 4: Different Styles -->
+    <div class="test-section">
+      <h2>4. Different Button Styles</h2>
+      <p>Test that the popup works with various button styles</p>
+      <div class="button-group">
+        <a href="#free-trial" class="btn btn-primary">Primary Button</a>
+        <a href="#free-trial" class="btn btn-secondary">Secondary Button</a>
+        <a href="#free-trial" class="btn btn-link">Text Link</a>
+        <a href="#free-trial" style="color: #0066FF; text-decoration: underline;">Plain Link</a>
+      </div>
+    </div>
+
+    <!-- Test 5: Second Form (Different Color) -->
+    <div class="test-section">
+      <h2>5. Multiple Forms Test</h2>
+      <p>Test second form with different brand color (green #10b981) using <code>#contact</code> and <code>.contact-form</code></p>
+      <div class="button-group">
+        <a href="#contact" class="btn btn-primary" style="background: #10b981; border-color: #10b981;">Contact Us (Hash)</a>
+        <button class="btn btn-primary contact-form" style="background: #10b981; border-color: #10b981;">Contact Us (Class)</button>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="note">
+      <strong>💡 What to test:</strong>
+      <ul style="margin: 0.5rem 0 0 1.5rem;">
+        <li>Click each button and verify the correct popup opens</li>
+        <li>Check that forms load correctly inside their popups</li>
+        <li>Verify first form (blue buttons) has <strong>blue</strong> close button/loader</li>
+        <li>Verify second form (green buttons) has <strong>green</strong> close button/loader</li>
+        <li>Test closing with ESC key</li>
+        <li>Test closing by clicking outside the popup</li>
+        <li>Test closing with the × button</li>
+        <li>Verify the popup is responsive (resize your browser window)</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
