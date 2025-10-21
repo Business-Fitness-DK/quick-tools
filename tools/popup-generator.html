@@ -155,6 +155,109 @@
       color: var(--text-tertiary);
       margin-top: 0.25rem;
     }
+
+    .popup-card {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
+      position: relative;
+    }
+
+    .popup-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .popup-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .remove-popup {
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .remove-popup:hover {
+      background: var(--surface-hover);
+      color: var(--error);
+    }
+
+    .compact-row {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: var(--spacing-md);
+      align-items: start;
+    }
+
+    .compact-row-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: var(--spacing-md);
+      align-items: start;
+    }
+
+    .triggers-list {
+      margin-top: var(--spacing-sm);
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--text-primary);
+      color: white;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .trigger-help {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .trigger-help code {
+      background: var(--surface-hover);
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-family: Monaco, monospace;
+      font-size: 0.7rem;
+    }
   </style>
 </head>
 <body>
@@ -175,61 +278,25 @@
       <h1 class="page-title">Popup Script Generator</h1>
       <p class="page-subtitle">Generate the script snippet for your popup form</p>
 
-      <!-- Configuration Form -->
-      <div class="form-section">
-        <div class="section-title">Popup Configuration</div>
-
-        <!-- Form URL -->
-        <div class="form-group">
-          <label class="form-label" for="formUrl">Form URL *</label>
-          <input type="text" id="formUrl" class="form-input" placeholder="https://example.com/widget/form/YOUR_FORM_ID" required>
-          <div class="helper-text">The URL of your form or iframe content</div>
+      <!-- Load Existing Config -->
+      <div class="form-section" style="padding: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+        <div style="font-size: 0.875rem; font-weight: 500; margin-bottom: var(--spacing-sm);">Load Existing Configuration</div>
+        <div style="display: flex; gap: var(--spacing-sm); align-items: flex-start;">
+          <textarea id="pasteScript" class="form-input" placeholder="Paste your existing popup script here..." style="flex: 1; margin: 0; min-height: 60px; resize: vertical; font-family: monospace; font-size: 0.8125rem;"></textarea>
+          <button class="btn btn-secondary" id="loadConfigBtn" style="white-space: nowrap; align-self: flex-start;">Load Script</button>
         </div>
-
-        <!-- Brand Color -->
-        <div class="form-group">
-          <label class="form-label" for="brandColor">Brand Color</label>
-          <div class="color-input-wrapper">
-            <input type="color" id="colorPicker" class="color-preview" value="#0066FF">
-            <input type="text" id="brandColor" class="form-input color-input" value="#0066FF" placeholder="#0066FF">
-          </div>
-          <div class="helper-text">Color for close button and loading spinner</div>
-        </div>
-
-        <!-- Size -->
-        <div class="form-group">
-          <label class="form-label">Popup Size</label>
-          <div class="radio-group">
-            <div class="radio-option">
-              <input type="radio" id="sizeAuto" name="size" value="auto" checked>
-              <label for="sizeAuto">Auto (Responsive)</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="sizeCustom" name="size" value="custom">
-              <label for="sizeCustom">Custom Size</label>
-            </div>
-          </div>
-          <div id="customSizeInputs" style="display: none;">
-            <div style="display: flex; gap: var(--spacing-md);">
-              <div class="form-group" style="flex: 1; margin: 0;">
-                <input type="number" id="width" class="form-input" placeholder="700" min="300">
-                <div class="helper-text">Width (px)</div>
-              </div>
-              <div class="form-group" style="flex: 1; margin: 0;">
-                <input type="number" id="height" class="form-input" placeholder="650" min="300">
-                <div class="helper-text">Height (px)</div>
-              </div>
-            </div>
-          </div>
+        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+          Paste the script from your website (the part with initPopups)
         </div>
       </div>
 
-      <!-- Triggers Section -->
-      <div class="form-section">
-        <div class="section-title">Triggers</div>
-        <div id="triggersContainer"></div>
-        <button class="btn add-trigger" id="addTrigger">+ Add Trigger</button>
+      <!-- Popups Container -->
+      <div id="popupsContainer">
+        <!-- Popup configurations will be added here -->
       </div>
+
+      <!-- Add Popup Button -->
+      <button class="btn add-trigger" id="addPopupBtn" style="margin-bottom: var(--spacing-lg);">+ Add Popup</button>
 
       <!-- Generate Button -->
       <button class="btn btn-primary" id="generateBtn" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
@@ -266,85 +333,254 @@
   </main>
 
   <script>
-    let triggerCount = 0;
+    let popupCount = 0;
+    let popups = [];
 
     // Elements
-    const formUrl = document.getElementById('formUrl');
-    const brandColor = document.getElementById('brandColor');
-    const colorPicker = document.getElementById('colorPicker');
-    const sizeAuto = document.getElementById('sizeAuto');
-    const sizeCustom = document.getElementById('sizeCustom');
-    const customSizeInputs = document.getElementById('customSizeInputs');
-    const widthInput = document.getElementById('width');
-    const heightInput = document.getElementById('height');
-    const triggersContainer = document.getElementById('triggersContainer');
-    const addTriggerBtn = document.getElementById('addTrigger');
+    const pasteScript = document.getElementById('pasteScript');
+    const loadConfigBtn = document.getElementById('loadConfigBtn');
+    const popupsContainer = document.getElementById('popupsContainer');
+    const addPopupBtn = document.getElementById('addPopupBtn');
     const generateBtn = document.getElementById('generateBtn');
     const outputSection = document.getElementById('outputSection');
     const outputCode = document.getElementById('outputCode');
     const copyBtn = document.getElementById('copyBtn');
     const alertArea = document.getElementById('alertArea');
 
-    // Color picker sync
-    colorPicker.addEventListener('input', (e) => {
-      brandColor.value = e.target.value;
-    });
+    // Load existing config from pasted script
+    loadConfigBtn.addEventListener('click', () => {
+      const scriptText = pasteScript.value.trim();
 
-    brandColor.addEventListener('input', (e) => {
-      if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
-        colorPicker.value = e.target.value;
+      if (!scriptText) {
+        showAlert('Please paste your popup script', 'error');
+        return;
+      }
+
+      try {
+        // Match initPopups({...})
+        const regex = /initPopups\s*\(\s*(\{[\s\S]*?\})\s*\)/g;
+        const configs = [];
+        let match;
+
+        while ((match = regex.exec(scriptText)) !== null) {
+          try {
+            // Parse the config JSON
+            const configStr = match[1];
+            const config = eval('(' + configStr + ')');
+            configs.push(config);
+          } catch (e) {
+            console.error('Failed to parse config:', e);
+          }
+        }
+
+        if (configs.length === 0) {
+          showAlert('No popup configurations found in the pasted script', 'error');
+          return;
+        }
+
+        // Clear existing popups
+        popupsContainer.innerHTML = '';
+        popupCount = 0;
+
+        // Load configs
+        configs.forEach(config => {
+          loadPopupConfig(config);
+        });
+
+        showAlert(`Loaded ${configs.length} popup configuration(s)!`, 'success');
+        pasteScript.value = '';
+
+      } catch (error) {
+        showAlert('Failed to parse script. Please make sure you pasted valid JavaScript.', 'error');
+        console.error(error);
       }
     });
 
-    // Size toggle
-    document.querySelectorAll('input[name="size"]').forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        customSizeInputs.style.display = e.target.value === 'custom' ? 'block' : 'none';
+    // Load a popup config into the UI
+    function loadPopupConfig(config) {
+      const popupId = popupCount++;
+      const popupCard = document.createElement('div');
+      popupCard.className = 'popup-card';
+      popupCard.dataset.popupId = popupId;
+
+      popupCard.innerHTML = `
+        <div class="popup-card-header">
+          <div class="popup-card-title">Popup ${popupId + 1}</div>
+          <button class="remove-popup" onclick="removePopup(${popupId})">×</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Form URL</label>
+          <input type="text" class="form-input popup-url" value="${config.formUrl || ''}" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: auto 32px 90px auto 1fr auto auto; gap: var(--spacing-sm); align-items: center; margin-bottom: var(--spacing-md);">
+          <label class="form-label" style="margin: 0; white-space: nowrap;">Color</label>
+          <input type="color" class="popup-color-picker" value="${config.brandColor || '#0066FF'}" style="height: 32px; width: 32px; cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius); padding: 2px;">
+          <input type="text" class="form-input popup-color" value="${config.brandColor || '#0066FF'}" style="margin: 0; font-size: 0.8125rem; text-align: center;">
+          <label class="form-label" style="margin: 0; white-space: nowrap; margin-left: var(--spacing-md);">Size</label>
+          <select class="form-input popup-size" style="margin: 0;">
+            <option value="auto" ${config.width === 'auto' ? 'selected' : ''}>Auto</option>
+            <option value="custom" ${config.width !== 'auto' ? 'selected' : ''}>Custom</option>
+          </select>
+          <input type="number" class="form-input popup-width" placeholder="W" min="300" value="${config.width !== 'auto' ? config.width : ''}" style="margin: 0; width: 70px; display: ${config.width !== 'auto' ? 'block' : 'none'};">
+          <input type="number" class="form-input popup-height" placeholder="H" min="300" value="${config.height !== 'auto' ? config.height : ''}" style="margin: 0; width: 70px; display: ${config.height !== 'auto' ? 'block' : 'none'};">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Triggers</label>
+          <div class="triggers-list popup-triggers"></div>
+          <button class="btn add-trigger" style="margin-top: var(--spacing-xs); width: 100%; padding: 0.5rem; font-size: 0.8125rem;" onclick="addTrigger(${popupId})">+ Add</button>
+        </div>
+      `;
+
+      popupsContainer.appendChild(popupCard);
+
+      // Color picker sync
+      const colorPicker = popupCard.querySelector('.popup-color-picker');
+      const colorInput = popupCard.querySelector('.popup-color');
+      colorPicker.addEventListener('input', (e) => colorInput.value = e.target.value);
+      colorInput.addEventListener('input', (e) => {
+        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) colorPicker.value = e.target.value;
       });
-    });
+
+      // Size toggle
+      const sizeSelect = popupCard.querySelector('.popup-size');
+      const widthInput = popupCard.querySelector('.popup-width');
+      const heightInput = popupCard.querySelector('.popup-height');
+      sizeSelect.addEventListener('change', (e) => {
+        const isCustom = e.target.value === 'custom';
+        widthInput.style.display = isCustom ? 'block' : 'none';
+        heightInput.style.display = isCustom ? 'block' : 'none';
+      });
+
+      // Initial state
+      const isCustom = sizeSelect.value === 'custom';
+      widthInput.style.display = isCustom ? 'block' : 'none';
+      heightInput.style.display = isCustom ? 'block' : 'none';
+
+      // Load triggers
+      if (config.triggers && config.triggers.length > 0) {
+        config.triggers.forEach(trigger => {
+          addTrigger(popupId, trigger.type, trigger.value);
+        });
+      } else {
+        addTrigger(popupId, 'hash', '');
+      }
+    }
+
+    // Add popup
+    function addPopup() {
+      const popupId = popupCount++;
+      const popupCard = document.createElement('div');
+      popupCard.className = 'popup-card';
+      popupCard.dataset.popupId = popupId;
+
+      popupCard.innerHTML = `
+        <div class="popup-card-header">
+          <div class="popup-card-title">Popup ${popupId + 1}</div>
+          <button class="remove-popup" onclick="removePopup(${popupId})">×</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Form URL</label>
+          <input type="text" class="form-input popup-url" placeholder="https://example.com/widget/form/YOUR_FORM_ID" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: auto 32px 90px auto 1fr auto auto; gap: var(--spacing-sm); align-items: center; margin-bottom: var(--spacing-md);">
+          <label class="form-label" style="margin: 0; white-space: nowrap;">Color</label>
+          <input type="color" class="popup-color-picker" value="#0066FF" style="height: 32px; width: 32px; cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius); padding: 2px;">
+          <input type="text" class="form-input popup-color" value="#0066FF" style="margin: 0; font-size: 0.8125rem; text-align: center;">
+          <label class="form-label" style="margin: 0; white-space: nowrap; margin-left: var(--spacing-md);">Size</label>
+          <select class="form-input popup-size" style="margin: 0;">
+            <option value="auto">Auto</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input type="number" class="form-input popup-width" placeholder="W" min="300" style="margin: 0; width: 70px; display: none;">
+          <input type="number" class="form-input popup-height" placeholder="H" min="300" style="margin: 0; width: 70px; display: none;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Triggers</label>
+          <div class="triggers-list popup-triggers"></div>
+          <button class="btn add-trigger" style="margin-top: var(--spacing-xs); width: 100%; padding: 0.5rem; font-size: 0.8125rem;" onclick="addTrigger(${popupId})">+ Add</button>
+        </div>
+      `;
+
+      popupsContainer.appendChild(popupCard);
+
+      // Color picker sync
+      const colorPicker = popupCard.querySelector('.popup-color-picker');
+      const colorInput = popupCard.querySelector('.popup-color');
+      colorPicker.addEventListener('input', (e) => colorInput.value = e.target.value);
+      colorInput.addEventListener('input', (e) => {
+        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) colorPicker.value = e.target.value;
+      });
+
+      // Size toggle
+      const sizeSelect = popupCard.querySelector('.popup-size');
+      const widthInput = popupCard.querySelector('.popup-width');
+      const heightInput = popupCard.querySelector('.popup-height');
+      sizeSelect.addEventListener('change', (e) => {
+        const isCustom = e.target.value === 'custom';
+        widthInput.style.display = isCustom ? 'block' : 'none';
+        heightInput.style.display = isCustom ? 'block' : 'none';
+      });
+
+      // Initial state
+      const isCustom = sizeSelect.value === 'custom';
+      widthInput.style.display = isCustom ? 'block' : 'none';
+      heightInput.style.display = isCustom ? 'block' : 'none';
+
+      // Add first trigger
+      addTrigger(popupId, 'hash', '');
+    }
+
+    function removePopup(popupId) {
+      const popup = document.querySelector(`[data-popup-id="${popupId}"]`);
+      popup.remove();
+    }
 
     // Add trigger
-    function addTrigger(type = 'hash', value = '') {
-      const triggerId = triggerCount++;
+    function addTrigger(popupId, type = 'hash', value = '') {
+      const popupCard = document.querySelector(`[data-popup-id="${popupId}"]`);
+      const triggersContainer = popupCard.querySelector('.popup-triggers');
+      const triggerId = Date.now();
+
       const triggerDiv = document.createElement('div');
       triggerDiv.className = 'trigger-group';
       triggerDiv.dataset.triggerId = triggerId;
 
       triggerDiv.innerHTML = `
-        <div class="trigger-header">
-          <span style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary);">Trigger ${triggerId + 1}</span>
-          <button class="remove-trigger" onclick="removeTrigger(${triggerId})">×</button>
-        </div>
-        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-          <select class="form-input trigger-type-select" data-trigger-id="${triggerId}">
-            <option value="hash" ${type === 'hash' ? 'selected' : ''}>Hash Link (#)</option>
-            <option value="class" ${type === 'class' ? 'selected' : ''}>CSS Class (.)</option>
-            <option value="id" ${type === 'id' ? 'selected' : ''}>Element ID (#)</option>
-            <option value="url" ${type === 'url' ? 'selected' : ''}>URL/Page</option>
+        <div style="display: grid; grid-template-columns: 100px 1fr auto; gap: var(--spacing-xs); align-items: start;">
+          <select class="form-input trigger-type" style="margin: 0; font-size: 0.8125rem; padding: 0.5rem;">
+            <option value="hash" ${type === 'hash' ? 'selected' : ''}>Hash</option>
+            <option value="class" ${type === 'class' ? 'selected' : ''}>Class</option>
+            <option value="id" ${type === 'id' ? 'selected' : ''}>ID</option>
+            <option value="url" ${type === 'url' ? 'selected' : ''}>URL</option>
           </select>
-        </div>
-        <div class="form-group" style="margin: 0;">
-          <input type="text" class="form-input trigger-value" data-trigger-id="${triggerId}"
-                 value="${value}" placeholder="${getPlaceholder(type)}">
-          <div class="helper-text">${getHelperText(type)}</div>
+          <div>
+            <input type="text" class="form-input trigger-value" value="${value}" placeholder="${getPlaceholder(type)}" style="margin: 0; font-size: 0.8125rem; padding: 0.5rem;">
+            <div class="trigger-help">${getHelp(type)}</div>
+          </div>
+          <button class="remove-trigger" onclick="removeTrigger(${triggerId})" style="width: 24px; height: 24px; flex-shrink: 0;">×</button>
         </div>
       `;
 
       triggersContainer.appendChild(triggerDiv);
 
-      // Add change listener to update placeholder
-      const select = triggerDiv.querySelector('.trigger-type-select');
+      // Update placeholder and help on type change
+      const select = triggerDiv.querySelector('.trigger-type');
       const input = triggerDiv.querySelector('.trigger-value');
-
+      const helpText = triggerDiv.querySelector('.trigger-help');
       select.addEventListener('change', (e) => {
-        const newType = e.target.value;
-        input.placeholder = getPlaceholder(newType);
-        input.parentElement.querySelector('.helper-text').textContent = getHelperText(newType);
+        input.placeholder = getPlaceholder(e.target.value);
+        helpText.innerHTML = getHelp(e.target.value);
       });
     }
 
     function removeTrigger(triggerId) {
-      const trigger = document.querySelector(`[data-trigger-id="${triggerId}"]`).closest('.trigger-group');
+      const trigger = document.querySelector(`[data-trigger-id="${triggerId}"]`);
       trigger.remove();
     }
 
@@ -358,78 +594,106 @@
       return placeholders[type] || '';
     }
 
-    function getHelperText(type) {
-      const helpers = {
-        hash: 'Use with: <a href="#free-trial">Click</a>',
-        class: 'Use with: <button class="open-popup">Click</button>',
-        id: 'Use with: <button id="signup-button">Click</button>',
-        url: 'Auto-opens when user visits this page'
+    function getHelp(type) {
+      const help = {
+        hash: 'Link to <code>#value</code> (e.g., <code>&lt;a href="#free-trial"&gt;</code>)',
+        class: 'Add class to element (e.g., <code>&lt;button class="open-popup"&gt;</code>)',
+        id: 'Add ID to element (e.g., <code>&lt;div id="signup-button"&gt;</code>)',
+        url: 'Triggers on page URL (e.g., <code>/landing-page</code>)'
       };
-      return helpers[type] || '';
+      return help[type] || '';
     }
 
-    // Add first trigger by default
-    addTrigger('hash', 'free-trial');
+    // Add first popup by default
+    addPopup();
 
-    addTriggerBtn.addEventListener('click', () => addTrigger());
+    addPopupBtn.addEventListener('click', () => addPopup());
 
     // Generate script
     generateBtn.addEventListener('click', () => {
-      // Validate
-      if (!formUrl.value) {
-        showAlert('Please enter a form URL', 'error');
-        return;
-      }
+      const popupConfigs = [];
 
-      try {
-        new URL(formUrl.value);
-      } catch (e) {
-        showAlert('Please enter a valid URL', 'error');
-        return;
-      }
+      // Collect all popup configurations
+      document.querySelectorAll('.popup-card').forEach(card => {
+        const formUrl = card.querySelector('.popup-url').value;
+        const brandColor = card.querySelector('.popup-color').value;
+        const sizeSelect = card.querySelector('.popup-size').value;
+        const width = sizeSelect === 'auto' ? 'auto' : (card.querySelector('.popup-width').value || 700);
+        const height = sizeSelect === 'auto' ? 'auto' : (card.querySelector('.popup-height').value || 650);
 
-      // Collect triggers
-      const triggers = [];
-      document.querySelectorAll('.trigger-group').forEach(group => {
-        const type = group.querySelector('.trigger-type-select').value;
-        const value = group.querySelector('.trigger-value').value;
-        if (value) {
-          triggers.push({ type, value });
+        // Validate form URL
+        if (!formUrl) {
+          showAlert('Please enter a form URL for all popups', 'error');
+          return;
         }
+
+        try {
+          new URL(formUrl);
+        } catch (e) {
+          showAlert('Please enter valid URLs for all popups', 'error');
+          return;
+        }
+
+        // Collect triggers
+        const triggers = [];
+        card.querySelectorAll('.trigger-group').forEach(group => {
+          const type = group.querySelector('.trigger-type').value;
+          const value = group.querySelector('.trigger-value').value;
+          if (value) {
+            triggers.push({ type, value });
+          }
+        });
+
+        if (triggers.length === 0) {
+          showAlert('Please add at least one trigger for each popup', 'error');
+          return;
+        }
+
+        popupConfigs.push({
+          formUrl,
+          brandColor,
+          width,
+          height,
+          triggers
+        });
       });
 
-      if (triggers.length === 0) {
-        showAlert('Please add at least one trigger', 'error');
+      if (popupConfigs.length === 0) {
+        showAlert('Please add at least one popup', 'error');
         return;
       }
 
-      // Build config
-      const config = {
-        formUrl: formUrl.value,
-        brandColor: brandColor.value,
-        width: sizeAuto.checked ? 'auto' : (widthInput.value || 700),
-        height: sizeAuto.checked ? 'auto' : (heightInput.value || 650),
-        triggers: triggers
-      };
-
       // Generate script
-      const script = generateScript(config);
+      const script = generateScript(popupConfigs);
       outputCode.textContent = script;
       outputSection.classList.remove('hidden');
       outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Auto-copy to clipboard
+      navigator.clipboard.writeText(script).then(() => {
+        showToast('✓ Copied to clipboard!');
+      }).catch(() => {
+        showAlert('Script generated! Click "Copy" to copy to clipboard.', 'success');
+      });
     });
 
-    function generateScript(config) {
-      const configStr = JSON.stringify(config, null, 2)
-        .split('\n')
-        .map((line, i) => i === 0 ? line : '          ' + line)
-        .join('\n');
+    function generateScript(popupConfigs) {
+      let script = '<script src="https://cdn.jsdelivr.net/gh/yourusername/quick-tools@main/openPopup.js"></' + 'script>\n\n';
+      script += '<script>\n';
 
-      return `<script src="https://cdn.jsdelivr.net/gh/yourusername/quick-tools@main/openPopup.js"></script>
+      popupConfigs.forEach((config, index) => {
+        const configStr = JSON.stringify(config, null, 2)
+          .split('\n')
+          .map((line, i) => i === 0 ? line : '    ' + line)
+          .join('\n');
 
-<script>
-  initPopups(${configStr});
-</script>`;
+        if (index > 0) script += '\n';
+        script += '  // Popup ' + (index + 1) + '\n';
+        script += '  initPopups(' + configStr + ');\n';
+      });
+
+      script += '</' + 'script>';
+      return script;
     }
 
     // Copy to clipboard
@@ -452,6 +716,20 @@
       setTimeout(() => {
         alertArea.innerHTML = '';
       }, 3000);
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 2500);
     }
   </script>
 
