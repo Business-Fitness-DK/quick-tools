@@ -325,6 +325,10 @@
             <li>Test that everything works!</li>
           </ol>
         </div>
+
+        <button class="btn btn-primary" id="testPopupBtn" style="width: 100%; margin-top: var(--spacing-md);">
+          Test Popup →
+        </button>
       </div>
 
       <!-- Alert Area -->
@@ -732,6 +736,16 @@
         }, 300);
       }, 2500);
     }
+
+    // Test Popup Button
+    document.getElementById('testPopupBtn').addEventListener('click', () => {
+      const script = outputCode.textContent;
+      if (script) {
+        // Encode the script to pass via URL
+        const encodedScript = encodeURIComponent(script);
+        window.open(`./test-popup.html?script=${encodedScript}`, '_blank');
+      }
+    });
   </script>
 
 </body>

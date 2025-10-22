@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Popup</title>
+  <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+  <link rel="stylesheet" href="../assets/css/brand.css">
+  <style>
+    .tool-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .compact-section {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .toggle-icon {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .section-content {
+      margin-top: var(--spacing-sm);
+    }
+
+    .section-content.collapsed {
+      display: none;
+    }
+
+    #scriptEditor {
+      width: 100%;
+      min-height: 80px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.75rem;
+      padding: var(--spacing-sm);
+      background: #f5f5f5;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      resize: vertical;
+    }
+
+    .preview-section {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-xs);
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .preview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .preview-frame {
+      width: 100%;
+      min-height: calc(100vh - 240px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: white;
+    }
+
+    .test-button {
+      position: relative;
+      display: inline-block;
+      margin: 0.5rem;
+    }
+
+    .edit-overlay {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .test-button:hover .edit-overlay {
+      opacity: 1;
+    }
+
+    .edit-overlay:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fadeIn 0.2s;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--shadow-xl);
+      animation: slideUp 0.3s;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .close-modal {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .close-modal:hover {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-lg);
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--text-primary);
+      color: white;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      z-index: 10001;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="logo">
+        <img src="../assets/images/logo.png" alt="Logo">
+        <span class="logo-text">Quick Tools from Business & Fitness</span>
+      </a>
+      <a href="./popup-generator.html" class="back-link">Back to Generator</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container" style="padding-top: 0.5rem;">
+    <div class="tool-container">
+      <h1 class="page-title" style="margin-bottom: 0.25rem; font-size: 1.5rem;">Test Popup</h1>
+
+      <!-- Script Section (Collapsible) -->
+      <div class="compact-section">
+        <div class="section-header" onclick="toggleSection('script')">
+          <div class="section-title">Popup Script</div>
+          <div class="toggle-icon" id="script-toggle">▼</div>
+        </div>
+        <div class="section-content" id="script-content">
+          <textarea id="scriptEditor" placeholder="Paste your popup script here..."></textarea>
+          <button class="btn btn-primary" id="updatePreviewBtn" style="width: 100%; margin-top: var(--spacing-xs); padding: 0.625rem 1rem; font-size: 0.875rem;">Load popup script</button>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="preview-section">
+        <div class="preview-header">
+          <div class="preview-title">Live Preview</div>
+          <button class="btn btn-secondary" id="addButtonBtn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">+ Add Button</button>
+        </div>
+        <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts allow-popups allow-forms allow-same-origin"></iframe>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Edit Button</div>
+        <button class="close-modal" onclick="closeModal()">×</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Button Text</label>
+        <input type="text" class="form-input" id="editText" placeholder="Open Popup">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Button Link (URL or #hash)</label>
+        <input type="text" class="form-input" id="editLink" placeholder="#free-trial or https://example.com">
+        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+          Use #hash for hash triggers (e.g., #free-trial)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Button ID (optional)</label>
+        <input type="text" class="form-input" id="editId" placeholder="signup-button">
+        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+          HTML ID attribute for this button
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Button Class (optional)</label>
+        <input type="text" class="form-input" id="editClass" placeholder="open-popup">
+        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+          HTML class attribute for this button
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn btn-primary" onclick="saveEdit()" style="flex: 1;">Save</button>
+        <button class="btn btn-secondary" onclick="deleteButton()" style="padding: 0.75rem 1rem;">Delete</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const scriptEditor = document.getElementById('scriptEditor');
+    const addButtonBtn = document.getElementById('addButtonBtn');
+    const updatePreviewBtn = document.getElementById('updatePreviewBtn');
+    const previewFrame = document.getElementById('previewFrame');
+    const editModal = document.getElementById('editModal');
+
+    let buttons = [];
+    let editingButtonId = null;
+
+    // Toggle section collapse
+    function toggleSection(section) {
+      const content = document.getElementById(`${section}-content`);
+      const toggle = document.getElementById(`${section}-toggle`);
+      content.classList.toggle('collapsed');
+      toggle.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+    }
+
+    // Load script from URL parameter
+    function loadFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const encodedScript = urlParams.get('script');
+
+      if (encodedScript) {
+        const script = decodeURIComponent(encodedScript);
+        scriptEditor.value = script;
+
+        // Auto-generate buttons based on triggers
+        autoGenerateButtons(script);
+
+        // Update preview
+        setTimeout(() => updatePreview(), 100);
+      }
+    }
+
+    // Auto-generate buttons from script triggers
+    function autoGenerateButtons(script) {
+      // Extract triggers from script
+      const hashRegex = /"type":\s*"hash",\s*"value":\s*"([^"]*)"/g;
+      const classRegex = /"type":\s*"class",\s*"value":\s*"([^"]*)"/g;
+      const idRegex = /"type":\s*"id",\s*"value":\s*"([^"]*)"/g;
+
+      let match;
+
+      // Hash triggers
+      while ((match = hashRegex.exec(script)) !== null) {
+        const value = match[1];
+        if (value) {
+          addButton('Open Popup', `#${value}`, '', '');
+        }
+      }
+
+      // Class triggers
+      while ((match = classRegex.exec(script)) !== null) {
+        const value = match[1];
+        if (value) {
+          addButton('Open Popup', '#', '', value);
+        }
+      }
+
+      // ID triggers
+      while ((match = idRegex.exec(script)) !== null) {
+        const value = match[1];
+        if (value) {
+          addButton('Open Popup', '#', value, '');
+        }
+      }
+    }
+
+    // Add a button to the data array
+    function addButton(text = 'Open Popup', link = '#', idAttr = '', classAttr = '') {
+      const id = Date.now();
+      buttons.push({ id, text, link, idAttr, classAttr });
+    }
+
+    // Update preview
+    function updatePreview() {
+      const script = scriptEditor.value;
+
+      if (!script.trim()) {
+        showToast('Please add your popup script first');
+        return;
+      }
+
+      // Generate HTML from buttons with edit icons
+      let html = '<div style="padding: 2rem; font-family: system-ui, -apple-system, sans-serif;">\n';
+      html += '  <h2 style="margin-bottom: 1.5rem;">Click a button to test your popup</h2>\n\n';
+
+      if (buttons.length === 0) {
+        html += '  <p style="color: #666;">No test buttons created yet. Click "+ Add Button" to create one.</p>\n';
+      } else {
+        buttons.forEach(btn => {
+          const editIcon = `<div class="edit-overlay" onclick="parent.openEditModal(${btn.id})" title="Edit button">✎</div>`;
+
+          // Build attributes
+          const idAttr = btn.idAttr ? ` id="${btn.idAttr}"` : '';
+          const classAttr = btn.classAttr ? ` class="${btn.classAttr}"` : '';
+
+          // Determine if it's a link or button
+          const isLink = btn.link && btn.link.startsWith('#');
+
+          if (isLink) {
+            html += `  <div class="test-button"><a href="${btn.link}"${idAttr}${classAttr} style="display: inline-block; padding: 0.75rem 1.5rem; background: #0066FF; color: white; text-decoration: none; border-radius: 6px; font-size: 1rem;">${btn.text}</a>${editIcon}</div>\n`;
+          } else {
+            html += `  <div class="test-button"><button${idAttr}${classAttr} style="padding: 0.75rem 1.5rem; background: #0066FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;">${btn.text}</button>${editIcon}</div>\n`;
+          }
+        });
+      }
+
+      html += '</div>';
+
+      // Create full HTML document for iframe
+      const fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .test-button {
+      position: relative;
+      display: inline-block;
+      margin: 0.5rem;
+    }
+    .edit-overlay {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border: 1px solid #E9E9E7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      opacity: 0;
+      transition: opacity 0.2s;
+      font-size: 0.75rem;
+    }
+    .test-button:hover .edit-overlay {
+      opacity: 1;
+    }
+    .edit-overlay:hover {
+      background: #0066FF;
+      color: white;
+      border-color: #0066FF;
+    }
+  </style>
+</head>
+<body>
+  ${html}
+  ${script}
+</body>
+</html>
+      `;
+
+      // Update iframe
+      const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+      doc.open();
+      doc.write(fullHtml);
+      doc.close();
+
+      showToast('Preview updated!');
+    }
+
+    // Open edit modal
+    function openEditModal(buttonId) {
+      editingButtonId = buttonId;
+      const button = buttons.find(b => b.id === buttonId);
+
+      if (button) {
+        document.getElementById('editText').value = button.text || '';
+        document.getElementById('editLink').value = button.link || '#';
+        document.getElementById('editId').value = button.idAttr || '';
+        document.getElementById('editClass').value = button.classAttr || '';
+        editModal.classList.remove('hidden');
+      }
+    }
+    window.openEditModal = openEditModal;
+
+    // Close modal
+    function closeModal() {
+      editModal.classList.add('hidden');
+      editingButtonId = null;
+    }
+    window.closeModal = closeModal;
+
+    // Save edit
+    function saveEdit() {
+      if (editingButtonId !== null) {
+        const button = buttons.find(b => b.id === editingButtonId);
+        if (button) {
+          button.text = document.getElementById('editText').value || 'Button';
+          button.link = document.getElementById('editLink').value || '#';
+          button.idAttr = document.getElementById('editId').value || '';
+          button.classAttr = document.getElementById('editClass').value || '';
+          updatePreview();
+          closeModal();
+        }
+      }
+    }
+    window.saveEdit = saveEdit;
+
+    // Delete button
+    function deleteButton() {
+      if (editingButtonId !== null) {
+        buttons = buttons.filter(b => b.id !== editingButtonId);
+        updatePreview();
+        closeModal();
+      }
+    }
+    window.deleteButton = deleteButton;
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 2000);
+    }
+
+    // Event listeners
+    addButtonBtn.addEventListener('click', () => {
+      addButton();
+      updatePreview();
+    });
+
+    updatePreviewBtn.addEventListener('click', updatePreview);
+
+    // Close modal on background click
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) closeModal();
+    });
+
+    // Initialize
+    loadFromURL();
+  </script>
+
+</body>
+</html>
