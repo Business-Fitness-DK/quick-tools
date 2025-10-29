@@ -320,10 +320,16 @@
           <strong>Next steps:</strong>
           <ol style="margin: 0.5rem 0 0 1.5rem; color: var(--text-secondary);">
             <li>Copy the script above</li>
-            <li>Paste it in your website's <code>&lt;head&gt;</code> section</li>
+            <li>Paste it in your website's <strong>Header Tracking</strong> or <code>&lt;head&gt;</code> section</li>
             <li>Add buttons/links with the trigger values you configured</li>
             <li>Test that everything works!</li>
           </ol>
+          <div style="margin-top: 0.75rem; padding: 0.75rem; background: #fff; border-radius: 4px; border-left: 3px solid var(--primary);">
+            <strong style="font-size: 0.8125rem;">Why the <code>defer</code> pattern?</strong>
+            <p style="margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.8125rem;">
+              The script uses <code>defer</code> and polling to ensure it works reliably in <strong>any platform</strong> (GoHighLevel, WordPress, etc.), even when placed in header tracking. It automatically waits up to 10 seconds for the library to load before timing out.
+            </p>
+          </div>
         </div>
 
         <button class="btn btn-primary" id="testPopupBtn" style="width: 100%; margin-top: var(--spacing-md);">
@@ -683,20 +689,36 @@
     });
 
     function generateScript(popupConfigs) {
-      let script = '<script src="https://cdn.jsdelivr.net/gh/Business-Fitness-DK/quick-tools@main/assets/js/openPopup.js"></' + 'script>\n\n';
-      script += '<script>\n';
+      let script = '<!-- Load popup library with defer -->\n';
+      script += '<script src="https://cdn.jsdelivr.net/gh/Business-Fitness-DK/quick-tools@main/assets/js/openPopup.js" defer></' + 'script>\n\n';
+      script += '<!-- Configure popups with defer -->\n';
+      script += '<script defer>\n';
+      script += '(function runWhenReady() {\n';
+      script += '  // Wait for openPopup library to load (with 10 second timeout)\n';
+      script += '  if (typeof window.initPopups === \'function\') {\n';
 
       popupConfigs.forEach((config, index) => {
         const configStr = JSON.stringify(config, null, 2)
           .split('\n')
-          .map((line, i) => i === 0 ? line : '    ' + line)
+          .map((line, i) => i === 0 ? '    ' + line : '      ' + line)
           .join('\n');
 
         if (index > 0) script += '\n';
-        script += '  // Popup ' + (index + 1) + '\n';
-        script += '  initPopups(' + configStr + ');\n';
+        script += '    // Popup ' + (index + 1) + '\n';
+        script += '    initPopups(' + configStr + ');\n';
       });
 
+      script += '  } else {\n';
+      script += '    // Retry every 30ms until loaded (max 10 seconds)\n';
+      script += '    var elapsed = (runWhenReady.elapsed || 0) + 30;\n';
+      script += '    if (elapsed < 10000) {\n';
+      script += '      runWhenReady.elapsed = elapsed;\n';
+      script += '      setTimeout(runWhenReady, 30);\n';
+      script += '    } else {\n';
+      script += '      console.error(\'openPopup library failed to load after 10 seconds\');\n';
+      script += '    }\n';
+      script += '  }\n';
+      script += '})();\n';
       script += '</' + 'script>';
       return script;
     }

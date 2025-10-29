@@ -22,9 +22,48 @@ Convert semicolon-separated CSV files to comma-separated format
   - Download or copy to clipboard
   - Statistics display (rows, columns)
 
-### Coming Soon
-- Popup Script Generator
-- And more...
+### Popup Script Generator
+Create customizable popup forms that trigger on clicks, page load, or URL
+- **File**: `tools/popup-generator.html`
+- **Features**:
+  - Multiple trigger types (hash links, classes, IDs, URLs)
+  - Customizable colors and sizes
+  - Multiple popups per page
+  - Works in any platform (WordPress, GHL, etc.)
+  - Automatic script generation with best practices
+
+**Usage**:
+```html
+<!-- Load popup library with defer -->
+<script src="https://cdn.jsdelivr.net/gh/Business-Fitness-DK/quick-tools@main/assets/js/openPopup.js" defer></script>
+
+<!-- Configure popups with defer -->
+<script defer>
+(function runWhenReady() {
+  // Wait for openPopup library to load (with 10 second timeout)
+  if (typeof window.initPopups === 'function') {
+    initPopups({
+      formUrl: "https://your-form-url.com",
+      brandColor: "#0066FF",
+      width: "auto",
+      height: "auto",
+      triggers: [{ type: "hash", value: "signup" }]
+    });
+  } else {
+    // Retry every 30ms until loaded (max 10 seconds)
+    var elapsed = (runWhenReady.elapsed || 0) + 30;
+    if (elapsed < 10000) {
+      runWhenReady.elapsed = elapsed;
+      setTimeout(runWhenReady, 30);
+    } else {
+      console.error('openPopup library failed to load after 10 seconds');
+    }
+  }
+})();
+</script>
+```
+
+### More Tools Coming Soon...
 
 ## 🎨 Brand Kit
 
