@@ -183,6 +183,56 @@
     }, 10000);
   }
 
+  // Store all popup configs
+  const popupConfigs = [];
+  let globalListenerAttached = false;
+
+  // Global click handler for all popups
+  function handleGlobalClick(e) {
+    // Check each popup config for matching triggers
+    popupConfigs.forEach(config => {
+      const { formUrl, brandColor, width, height, triggers } = config;
+
+      triggers.forEach(trigger => {
+        const { type, value } = trigger;
+        let shouldOpen = false;
+
+        // Hash link trigger (e.g., #free-trial or gratis-session-popup)
+        if (type === 'hash') {
+          const target = e.target.closest('a');
+          if (target) {
+            const hashValue = value.startsWith('#') ? value : `#${value}`;
+            if (target.hash === hashValue) {
+              shouldOpen = true;
+            }
+          }
+        }
+
+        // Class trigger (e.g., .open-popup or open-popup)
+        else if (type === 'class') {
+          const classValue = value.startsWith('.') ? value : `.${value}`;
+          if (e.target.closest(classValue)) {
+            shouldOpen = true;
+          }
+        }
+
+        // ID trigger (e.g., #popup-button or popup-button)
+        else if (type === 'id') {
+          const idValue = value.startsWith('#') ? value.substring(1) : value;
+          const element = document.getElementById(idValue);
+          if (element && (e.target === element || element.contains(e.target))) {
+            shouldOpen = true;
+          }
+        }
+
+        if (shouldOpen) {
+          e.preventDefault();
+          openPopup(formUrl, brandColor, width, height);
+        }
+      });
+    });
+  }
+
   // Initialize popups based on config
   function initPopups(config) {
     const {
@@ -198,45 +248,19 @@
       return;
     }
 
+    // Store config
+    popupConfigs.push({ formUrl, brandColor, width, height, triggers });
+
+    // Attach global listener only once
+    if (!globalListenerAttached) {
+      document.addEventListener('click', handleGlobalClick);
+      globalListenerAttached = true;
+    }
+
+    // Handle URL triggers
     triggers.forEach(trigger => {
-      const { type, value } = trigger;
-
-      // Hash link trigger (e.g., #free-trial)
-      if (type === 'hash') {
-        document.addEventListener('click', (e) => {
-          const target = e.target.closest('a');
-          const hashValue = value.startsWith('#') ? value : `#${value}`;
-          if (target && target.hash === hashValue) {
-            e.preventDefault();
-            openPopup(formUrl, brandColor, width, height);
-          }
-        });
-      }
-
-      // Class trigger (e.g., .open-popup)
-      else if (type === 'class') {
-        document.addEventListener('click', (e) => {
-          if (e.target.closest(`.${value}`)) {
-            e.preventDefault();
-            openPopup(formUrl, brandColor, width, height);
-          }
-        });
-      }
-
-      // ID trigger (e.g., #popup-button)
-      else if (type === 'id') {
-        document.addEventListener('click', (e) => {
-          const element = document.getElementById(value);
-          if (element && (e.target === element || element.contains(e.target))) {
-            e.preventDefault();
-            openPopup(formUrl, brandColor, width, height);
-          }
-        });
-      }
-
-      // URL trigger (opens popup on specific page)
-      else if (type === 'url') {
-        if (window.location.pathname === value || window.location.href.includes(value)) {
+      if (trigger.type === 'url') {
+        if (window.location.pathname === trigger.value || window.location.href.includes(trigger.value)) {
           // Wait for DOM to be ready, then open
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
