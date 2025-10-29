@@ -205,7 +205,8 @@
       if (type === 'hash') {
         document.addEventListener('click', (e) => {
           const target = e.target.closest('a');
-          if (target && target.hash === `#${value}`) {
+          const hashValue = value.startsWith('#') ? value : `#${value}`;
+          if (target && target.hash === hashValue) {
             e.preventDefault();
             openPopup(formUrl, brandColor, width, height);
           }
