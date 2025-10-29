@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #0066FF;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .test-button:hover {
+      background: #0052CC;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Popup Script Test</h1>
+
+  <h2>Hash Trigger Test</h2>
+  <p>This button uses href="#gratis-session-popup"</p>
+  <a href="#gratis-session-popup" class="test-button">Open Gratis Session Popup (Hash)</a>
+
+  <h2>Hash Trigger Test 2</h2>
+  <p>This button uses href="#bliv-medlem-popup"</p>
+  <a href="#bliv-medlem-popup" class="test-button">Open Bliv Medlem Popup (Hash)</a>
+
+  <h2>Class Trigger Test</h2>
+  <p>This button has class="open-test-popup"</p>
+  <button class="test-button open-test-popup">Open Test Popup (Class)</button>
+
+  <h2>ID Trigger Test</h2>
+  <p>This button has id="test-popup-btn"</p>
+  <button id="test-popup-btn" class="test-button">Open Test Popup (ID)</button>
+
+  <!-- Load the local popup script -->
+  <script src="./assets/js/openPopup.js"></script>
+
+  <!-- Configure popups -->
+  <script>
+    console.log('Configuring popups...');
+
+    // Gratis session popup
+    initPopups({
+      "formUrl": "https://book.businessandfitness.dk/widget/form/bf0WLT8ZngRg5Y2Qd5cD",
+      "brandColor": "#61B0BC",
+      "width": "auto",
+      "height": "auto",
+      "triggers": [
+        {
+          "type": "hash",
+          "value": "gratis-session-popup"
+        }
+      ]
+    });
+    console.log('Gratis session popup configured');
+
+    // Bliv medlem popup
+    initPopups({
+      "formUrl": "https://book.businessandfitness.dk/widget/form/qVSCnYCeVLiIHRShvIpp",
+      "brandColor": "#61B0BC",
+      "width": "auto",
+      "height": "auto",
+      "triggers": [
+        {
+          "type": "hash",
+          "value": "bliv-medlem-popup"
+        }
+      ]
+    });
+    console.log('Bliv medlem popup configured');
+
+    // Class trigger test
+    initPopups({
+      "formUrl": "https://book.businessandfitness.dk/widget/form/bf0WLT8ZngRg5Y2Qd5cD",
+      "brandColor": "#0066FF",
+      "width": "auto",
+      "height": "auto",
+      "triggers": [
+        {
+          "type": "class",
+          "value": "open-test-popup"
+        }
+      ]
+    });
+    console.log('Class trigger popup configured');
+
+    // ID trigger test
+    initPopups({
+      "formUrl": "https://book.businessandfitness.dk/widget/form/bf0WLT8ZngRg5Y2Qd5cD",
+      "brandColor": "#FF6600",
+      "width": "auto",
+      "height": "auto",
+      "triggers": [
+        {
+          "type": "id",
+          "value": "test-popup-btn"
+        }
+      ]
+    });
+    console.log('ID trigger popup configured');
+
+    console.log('All popups configured. Total configs:', window.popupConfigs?.length || 'unknown');
+  </script>
+</body>
+</html>
