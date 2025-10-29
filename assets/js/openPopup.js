@@ -1,13 +1,3 @@
-// Immediately define a queue for early initPopups calls
-window._popupQueue = window._popupQueue || [];
-
-// Define initPopups stub immediately so it's available even if script hasn't finished loading
-if (!window.initPopups) {
-  window.initPopups = function(config) {
-    window._popupQueue.push(config);
-  };
-}
-
 (function() {
   // Core popup function
   function openPopup(formUrl, brandColor = '#0066FF', width = 'auto', height = 'auto') {
@@ -304,15 +294,7 @@ if (!window.initPopups) {
     autoInit();
   }
 
-  // Process queued configs
-  if (window._popupQueue && window._popupQueue.length > 0) {
-    window._popupQueue.forEach(config => {
-      initPopups(config);
-    });
-    window._popupQueue = [];
-  }
-
-  // Expose to global scope (replaces the stub with the real function)
+  // Expose to global scope
   window.openPopup = openPopup;
   window.initPopups = initPopups;
 })();
