@@ -356,10 +356,12 @@
     </div>
   </main>
 
-  <!-- ffmpeg.wasm UMD loader -->
-  <!-- @ffmpeg/util UMD has a bundler bug that prevents the global from being exposed,
-       so we inline the two helpers we need (fetchFile, toBlobURL) below. -->
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
+  <!-- ffmpeg.wasm UMD loader.
+       Loaded from /vendor/* (Vercel-proxied to jsdelivr) so that the main
+       script, its auto-spawned 814.ffmpeg.js chunk, and the core workers
+       are all same-origin — classic Workers can't be constructed from
+       cross-origin URLs regardless of CORS headers. -->
+  <script src="/vendor/ffmpeg/ffmpeg.js"></script>
 
   <script>
     const FFMPEG_VERSION = '0.12.15';
@@ -370,7 +372,7 @@
       typeof self !== 'undefined' &&
       self.crossOriginIsolated === true;
 
-    // Inlined @ffmpeg/util helpers (upstream UMD bundle is broken at v0.12.2)
+    // Inlined @ffmpeg/util fetchFile (upstream UMD bundle is broken at v0.12.2).
     async function fetchFile(input) {
       if (typeof input === 'string' || input instanceof URL) {
         const res = await fetch(input);
@@ -380,12 +382,6 @@
         return new Uint8Array(await input.arrayBuffer());
       }
       return new Uint8Array();
-    }
-
-    async function toBlobURL(url, mimeType) {
-      const res = await fetch(url);
-      const buf = await res.arrayBuffer();
-      return URL.createObjectURL(new Blob([buf], { type: mimeType }));
     }
 
     // UI refs
@@ -741,19 +737,16 @@
         }
       });
 
+      // All URLs same-origin via Vercel rewrite to jsdelivr. classWorkerURL
+      // is intentionally unset — passing it would force {type:"module"},
+      // which doesn't work for the UMD build's classic worker chunks.
       const corePkg = MT_AVAILABLE ? 'core-mt' : 'core';
-      const baseURL = `https://cdn.jsdelivr.net/npm/@ffmpeg/${corePkg}@${CORE_VERSION}/dist/umd`;
-      const ffmpegBase = `https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@${FFMPEG_VERSION}/dist/umd`;
-
       const cfg = {
-        // Browsers block `new Worker(crossOriginURL)`, so we fetch the class
-        // worker script and pass a same-origin blob URL instead.
-        classWorkerURL: await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript'),
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        coreURL: `/vendor/${corePkg}/ffmpeg-core.js`,
+        wasmURL: `/vendor/${corePkg}/ffmpeg-core.wasm`,
       };
       if (MT_AVAILABLE) {
-        cfg.workerURL = await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript');
+        cfg.workerURL = `/vendor/${corePkg}/ffmpeg-core.worker.js`;
       }
       await ffmpeg.load(cfg);
       return ffmpeg;
