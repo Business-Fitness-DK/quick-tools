@@ -743,8 +743,12 @@
 
       const corePkg = MT_AVAILABLE ? 'core-mt' : 'core';
       const baseURL = `https://cdn.jsdelivr.net/npm/@ffmpeg/${corePkg}@${CORE_VERSION}/dist/umd`;
+      const ffmpegBase = `https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@${FFMPEG_VERSION}/dist/umd`;
 
       const cfg = {
+        // Browsers block `new Worker(crossOriginURL)`, so we fetch the class
+        // worker script and pass a same-origin blob URL instead.
+        classWorkerURL: await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript'),
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
       };
