@@ -8,7 +8,7 @@
       ]
     },
     {
-      "source": "/vendor/:path*",
+      "source": "/vendor-v2/:path*",
       "headers": [
         { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
         { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
@@ -17,8 +17,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/vendor/ffmpeg/:path*", "destination": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/:path*" },
-    { "source": "/vendor/core-mt/:path*", "destination": "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/umd/:path*" },
-    { "source": "/vendor/core/:path*", "destination": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/:path*" }
+    { "source": "/vendor-v2/ffmpeg/:path*", "destination": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/:path*" },
+    { "source": "/vendor-v2/core-mt/:path*", "destination": "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/umd/:path*" },
+    { "source": "/vendor-v2/core/:path*", "destination": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/:path*" }
   ]
 }

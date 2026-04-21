@@ -357,11 +357,11 @@
   </main>
 
   <!-- ffmpeg.wasm UMD loader.
-       Loaded from /vendor/* (Vercel-proxied to jsdelivr) so that the main
+       Loaded from /vendor-v2/* (Vercel-proxied to jsdelivr) so that the main
        script, its auto-spawned 814.ffmpeg.js chunk, and the core workers
        are all same-origin — classic Workers can't be constructed from
        cross-origin URLs regardless of CORS headers. -->
-  <script src="/vendor/ffmpeg/ffmpeg.js"></script>
+  <script src="/vendor-v2/ffmpeg/ffmpeg.js"></script>
 
   <script>
     const FFMPEG_VERSION = '0.12.15';
@@ -724,7 +724,7 @@
       // Surface any unhandled errors from the spawned workers that would
       // otherwise hang the LOAD promise silently.
       window.addEventListener('error', (e) => {
-        if (e.filename && e.filename.includes('/vendor/')) {
+        if (e.filename && e.filename.includes('/vendor-v2/')) {
           appendLog(`WORKER ERROR: ${e.message} @ ${e.filename}:${e.lineno}`);
         }
       });
@@ -757,9 +757,9 @@
       // classWorkerURL is intentionally unset — passing it forces
       // {type:"module"} which breaks UMD classic-worker chunks.
       const corePkg = MT_AVAILABLE ? 'core-mt' : 'core';
-      const cfg = { coreURL: `/vendor/${corePkg}/ffmpeg-core.js` };
+      const cfg = { coreURL: `/vendor-v2/${corePkg}/ffmpeg-core.js` };
 
-      appendLog(`Loading core from /vendor/${corePkg}/ (MT=${MT_AVAILABLE})…`);
+      appendLog(`Loading core from /vendor-v2/${corePkg}/ (MT=${MT_AVAILABLE})…`);
       await withTimeout(
         ffmpeg.load(cfg),
         60_000,
