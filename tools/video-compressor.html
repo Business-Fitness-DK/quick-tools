@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Compressor</title>
+  <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+  <link rel="stylesheet" href="../assets/css/brand.css">
+  <style>
+    .tool-container { max-width: 760px; margin: 0 auto; }
+
+    .file-upload-area {
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .file-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-bottom: var(--spacing-lg);
+      font-size: 0.875rem;
+    }
+
+    .file-info .info-label {
+      font-size: 0.6875rem;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .file-info .info-value {
+      font-weight: 500;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .settings {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .settings-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .settings-row:last-child { margin-bottom: 0; }
+
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .field select, .field input[type="number"] {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9375rem;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field select:focus, .field input[type="number"]:focus {
+      border-color: var(--primary);
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.375rem;
+      line-height: 1.4;
+    }
+
+    .progress-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border-light);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    .progress-fill.indeterminate {
+      width: 30%;
+      animation: indeterminate 1.3s ease-in-out infinite;
+    }
+
+    @keyframes indeterminate {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(433%); }
+    }
+
+    .log {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      background: #FAFAF9;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      max-height: 120px;
+      overflow: auto;
+      margin-top: var(--spacing-md);
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .actions .btn { flex: 1; min-width: 160px; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #EEF4FF;
+      color: var(--primary);
+      font-weight: 500;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .badge.warn { background: #FFF4E5; color: #B76E00; }
+
+    @media (max-width: 640px) {
+      .file-info { grid-template-columns: 1fr 1fr; }
+      .settings-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="logo">
+        <img src="../assets/images/logo.png" alt="Logo">
+        <span class="logo-text">Quick Tools from Business & Fitness</span>
+      </a>
+      <a href="../index.html" class="back-link">Back</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-container">
+      <h1 class="page-title">
+        Video Compressor
+        <span id="modeBadge" class="badge">checking…</span>
+      </h1>
+      <p class="page-subtitle">Compress videos in your browser. Nothing is uploaded.</p>
+
+      <!-- Step 1: Upload -->
+      <div id="uploadSection">
+        <div class="file-upload-area" id="dropZone">
+          <div class="file-upload-icon">↑</div>
+          <p class="upload-text">Drop a video file or click to browse</p>
+          <input type="file" id="fileInput" accept="video/*" style="display: none;">
+          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+            Choose Video
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Settings -->
+      <div id="settingsSection" class="hidden">
+        <div class="file-info">
+          <div>
+            <div class="info-label">File</div>
+            <div class="info-value" id="infoName">—</div>
+          </div>
+          <div>
+            <div class="info-label">Size</div>
+            <div class="info-value" id="infoSize">—</div>
+          </div>
+          <div>
+            <div class="info-label">Duration</div>
+            <div class="info-value" id="infoDuration">—</div>
+          </div>
+          <div>
+            <div class="info-label">Resolution</div>
+            <div class="info-value" id="infoResolution">—</div>
+          </div>
+        </div>
+
+        <div class="settings">
+          <div class="settings-row">
+            <div class="field">
+              <label for="targetSize">Target size (MB)</label>
+              <input type="number" id="targetSize" min="1" max="10240" value="20">
+              <div class="hint" id="bitrateHint">Bitrate will be calculated from duration.</div>
+            </div>
+            <div class="field">
+              <label for="codec">Video codec</label>
+              <select id="codec">
+                <option value="h264" selected>H.264 (fast, widely compatible)</option>
+                <option value="h265">H.265 (smaller, 3–5× slower)</option>
+              </select>
+              <div class="hint">H.264 recommended unless you need the smallest possible file.</div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="field">
+              <label for="preset">Speed preset</label>
+              <select id="preset">
+                <option value="ultrafast">Ultrafast (largest file, fastest)</option>
+                <option value="veryfast" selected>Veryfast (recommended)</option>
+                <option value="fast">Fast</option>
+                <option value="medium">Medium (smallest file, slowest)</option>
+              </select>
+              <div class="hint">Faster presets produce slightly larger files for the same quality.</div>
+            </div>
+            <div class="field">
+              <label for="resolution">Resolution</label>
+              <select id="resolution">
+                <option value="source" selected>Keep source</option>
+                <option value="1080">Max 1080p</option>
+                <option value="720">Max 720p</option>
+                <option value="480">Max 480p</option>
+              </select>
+              <div class="hint">Downscaling large sources is the single biggest speed win.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="compressBtn">Compress Video</button>
+          <button class="btn btn-secondary" id="cancelBtn">Choose Different File</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Progress -->
+      <div id="progressSection" class="hidden">
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span id="progressStage">Preparing…</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="log" id="logOutput"></div>
+        </div>
+      </div>
+
+      <!-- Step 4: Done -->
+      <div id="doneSection" class="hidden" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">✓</div>
+        <p style="font-size: 1.125rem; font-weight: 500; margin-bottom: var(--spacing-sm);">Compression complete</p>
+        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--spacing-xl);" id="doneSummary">—</p>
+        <div class="actions" style="justify-content: center;">
+          <button class="btn btn-primary" id="downloadBtn">Download Compressed Video</button>
+          <button class="btn btn-secondary" id="resetBtn">Compress Another</button>
+        </div>
+      </div>
+
+      <div id="alertArea"></div>
+    </div>
+  </main>
+
+  <!-- ffmpeg.wasm UMD loader -->
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
+
+  <script>
+    const FFMPEG_VERSION = '0.12.15';
+    const CORE_VERSION = '0.12.10';
+
+    const MT_AVAILABLE =
+      typeof SharedArrayBuffer !== 'undefined' &&
+      typeof self !== 'undefined' &&
+      self.crossOriginIsolated === true;
+
+    // UI refs
+    const uploadSection   = document.getElementById('uploadSection');
+    const settingsSection = document.getElementById('settingsSection');
+    const progressSection = document.getElementById('progressSection');
+    const doneSection     = document.getElementById('doneSection');
+    const dropZone        = document.getElementById('dropZone');
+    const fileInput       = document.getElementById('fileInput');
+    const infoName        = document.getElementById('infoName');
+    const infoSize        = document.getElementById('infoSize');
+    const infoDuration    = document.getElementById('infoDuration');
+    const infoResolution  = document.getElementById('infoResolution');
+    const targetSizeInput = document.getElementById('targetSize');
+    const codecSelect     = document.getElementById('codec');
+    const presetSelect    = document.getElementById('preset');
+    const resolutionSelect= document.getElementById('resolution');
+    const bitrateHint     = document.getElementById('bitrateHint');
+    const compressBtn     = document.getElementById('compressBtn');
+    const cancelBtn       = document.getElementById('cancelBtn');
+    const progressStage   = document.getElementById('progressStage');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressFill    = document.getElementById('progressFill');
+    const logOutput       = document.getElementById('logOutput');
+    const doneSummary     = document.getElementById('doneSummary');
+    const downloadBtn     = document.getElementById('downloadBtn');
+    const resetBtn        = document.getElementById('resetBtn');
+    const modeBadge       = document.getElementById('modeBadge');
+    const alertArea       = document.getElementById('alertArea');
+
+    modeBadge.textContent = MT_AVAILABLE ? 'Multi-threaded' : 'Single-threaded';
+    modeBadge.className = 'badge' + (MT_AVAILABLE ? '' : ' warn');
+
+    // State
+    let currentFile = null;
+    let durationSec = 0;
+    let srcWidth = 0;
+    let srcHeight = 0;
+    let outputBlob = null;
+    let outputFileName = '';
+    let ffmpeg = null;
+
+    // --- File intake ---
+    dropZone.addEventListener('click', (e) => {
+      if (e.target === dropZone || e.target.closest('.file-upload-icon') || e.target.closest('.upload-text')) {
+        fileInput.click();
+      }
+    });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    async function handleFile(file) {
+      if (!file.type.startsWith('video/') && !/\.(mp4|mov|mkv|webm|avi|m4v)$/i.test(file.name)) {
+        showAlert('Please upload a video file', 'error');
+        return;
+      }
+      currentFile = file;
+      infoName.textContent = file.name;
+      infoName.title = file.name;
+      infoSize.textContent = formatBytes(file.size);
+
+      const meta = await probeVideo(file);
+      durationSec = meta.duration;
+      srcWidth = meta.width;
+      srcHeight = meta.height;
+      infoDuration.textContent = formatDuration(durationSec);
+      infoResolution.textContent = srcWidth && srcHeight ? `${srcWidth}×${srcHeight}` : 'Unknown';
+
+      // Default target size: 20 MB or 25% of source, whichever is larger, capped at source size
+      const srcMB = file.size / (1024 * 1024);
+      const defaultTarget = Math.min(srcMB, Math.max(20, Math.round(srcMB * 0.25)));
+      targetSizeInput.value = defaultTarget;
+      updateBitrateHint();
+
+      uploadSection.classList.add('hidden');
+      settingsSection.classList.remove('hidden');
+    }
+
+    function probeVideo(file) {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+        video.src = URL.createObjectURL(file);
+        video.onloadedmetadata = () => {
+          const result = {
+            duration: video.duration || 0,
+            width: video.videoWidth || 0,
+            height: video.videoHeight || 0,
+          };
+          URL.revokeObjectURL(video.src);
+          resolve(result);
+        };
+        video.onerror = () => resolve({ duration: 0, width: 0, height: 0 });
+      });
+    }
+
+    targetSizeInput.addEventListener('input', updateBitrateHint);
+    function updateBitrateHint() {
+      const mb = parseFloat(targetSizeInput.value);
+      if (!mb || !durationSec) {
+        bitrateHint.textContent = 'Bitrate will be calculated from duration.';
+        return;
+      }
+      const { videoKbps, audioKbps } = calcBitrates(mb, durationSec);
+      bitrateHint.textContent = `≈ ${videoKbps} kbps video + ${audioKbps} kbps audio`;
+    }
+
+    function calcBitrates(targetMB, seconds) {
+      const totalKbits = targetMB * 8 * 1024; // MB → kbit
+      const audioKbps = 128;
+      const overheadPct = 0.97; // container overhead
+      let videoKbps = Math.max(100, Math.floor((totalKbits / seconds) * overheadPct - audioKbps));
+      return { videoKbps, audioKbps };
+    }
+
+    cancelBtn.addEventListener('click', reset);
+    resetBtn.addEventListener('click', reset);
+
+    function reset() {
+      currentFile = null;
+      outputBlob = null;
+      fileInput.value = '';
+      uploadSection.classList.remove('hidden');
+      settingsSection.classList.add('hidden');
+      progressSection.classList.add('hidden');
+      doneSection.classList.add('hidden');
+      logOutput.textContent = '';
+      progressFill.style.width = '0%';
+      progressFill.classList.remove('indeterminate');
+      progressPercent.textContent = '0%';
+      alertArea.innerHTML = '';
+    }
+
+    // --- Compression ---
+    compressBtn.addEventListener('click', runCompression);
+
+    async function runCompression() {
+      const targetMB = parseFloat(targetSizeInput.value);
+      if (!targetMB || targetMB < 1) { showAlert('Target size must be at least 1 MB', 'error'); return; }
+      if (!durationSec) { showAlert('Could not read video duration', 'error'); return; }
+
+      settingsSection.classList.add('hidden');
+      progressSection.classList.remove('hidden');
+      progressFill.style.width = '0%';
+      progressPercent.textContent = '';
+      progressFill.classList.add('indeterminate');
+      progressStage.textContent = 'Loading FFmpeg engine (~30 MB, one-time)…';
+      logOutput.textContent = '';
+
+      try {
+        await loadFFmpeg();
+
+        progressStage.textContent = 'Reading file…';
+        const { fetchFile } = FFmpegUtil;
+        const inputName = 'input' + (currentFile.name.match(/\.[^.]+$/)?.[0] || '.mp4');
+        await ffmpeg.writeFile(inputName, await fetchFile(currentFile));
+
+        progressFill.classList.remove('indeterminate');
+        progressFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+        progressStage.textContent = 'Compressing…';
+
+        const args = buildFFmpegArgs(inputName, 'output.mp4', targetMB);
+        appendLog('$ ffmpeg ' + args.join(' '));
+
+        await ffmpeg.exec(args);
+
+        progressStage.textContent = 'Packaging…';
+        const data = await ffmpeg.readFile('output.mp4');
+        outputBlob = new Blob([data.buffer], { type: 'video/mp4' });
+        outputFileName = currentFile.name.replace(/\.[^.]+$/, '') + '_compressed.mp4';
+
+        // Cleanup
+        try { await ffmpeg.deleteFile(inputName); } catch {}
+        try { await ffmpeg.deleteFile('output.mp4'); } catch {}
+
+        const outMB = outputBlob.size / (1024 * 1024);
+        const srcMB = currentFile.size / (1024 * 1024);
+        const saved = ((1 - outMB / srcMB) * 100).toFixed(1);
+        doneSummary.textContent = `${srcMB.toFixed(1)} MB → ${outMB.toFixed(1)} MB (${saved}% smaller)`;
+
+        progressSection.classList.add('hidden');
+        doneSection.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        appendLog('ERROR: ' + (err?.message || err));
+        showAlert('Compression failed: ' + (err?.message || 'unknown error'), 'error');
+        progressStage.textContent = 'Failed.';
+        progressFill.classList.remove('indeterminate');
+      }
+    }
+
+    function buildFFmpegArgs(input, output, targetMB) {
+      const { videoKbps, audioKbps } = calcBitrates(targetMB, durationSec);
+      const codec = codecSelect.value;
+      const preset = presetSelect.value;
+      const resOpt = resolutionSelect.value;
+
+      const args = ['-i', input];
+
+      // Scale filter if requested, only if source is larger than target height
+      if (resOpt !== 'source') {
+        const maxH = parseInt(resOpt, 10);
+        if (!srcHeight || srcHeight > maxH) {
+          // Scale keeping aspect ratio; ensure even dimensions for H.264/265
+          args.push('-vf', `scale=-2:min(${maxH}\\,ih)`);
+        }
+      }
+
+      if (codec === 'h265') {
+        args.push('-c:v', 'libx265', '-preset', preset, '-tag:v', 'hvc1');
+      } else {
+        args.push('-c:v', 'libx264', '-preset', preset, '-profile:v', 'high', '-pix_fmt', 'yuv420p');
+      }
+
+      args.push(
+        '-b:v', `${videoKbps}k`,
+        '-maxrate', `${Math.round(videoKbps * 1.5)}k`,
+        '-bufsize', `${videoKbps * 2}k`,
+        '-c:a', 'aac',
+        '-b:a', `${audioKbps}k`,
+        '-movflags', '+faststart',
+        '-threads', '0',
+        '-y',
+        output
+      );
+      return args;
+    }
+
+    async function loadFFmpeg() {
+      if (ffmpeg) return ffmpeg;
+      const { FFmpeg } = FFmpegWASM;
+      const { toBlobURL } = FFmpegUtil;
+
+      ffmpeg = new FFmpeg();
+      ffmpeg.on('log', ({ message }) => appendLog(message));
+      ffmpeg.on('progress', ({ progress }) => {
+        const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+        progressFill.style.width = pct + '%';
+        progressPercent.textContent = pct + '%';
+      });
+
+      const corePkg = MT_AVAILABLE ? 'core-mt' : 'core';
+      const baseURL = `https://cdn.jsdelivr.net/npm/@ffmpeg/${corePkg}@${CORE_VERSION}/dist/umd`;
+
+      const cfg = {
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      };
+      if (MT_AVAILABLE) {
+        cfg.workerURL = await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript');
+      }
+      await ffmpeg.load(cfg);
+      return ffmpeg;
+    }
+
+    // --- Download ---
+    downloadBtn.addEventListener('click', () => {
+      if (!outputBlob) return;
+      const url = URL.createObjectURL(outputBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = outputFileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+
+    // --- Helpers ---
+    function formatBytes(bytes) {
+      if (!bytes) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let i = 0;
+      let v = bytes;
+      while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+      return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
+    }
+
+    function formatDuration(s) {
+      if (!s || !isFinite(s)) return '—';
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = Math.floor(s % 60);
+      return h > 0
+        ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+        : `${m}:${String(sec).padStart(2,'0')}`;
+    }
+
+    function appendLog(line) {
+      logOutput.textContent += line + '\n';
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function showAlert(msg, type) {
+      const cls = type === 'success' ? 'alert-success' : 'alert-error';
+      alertArea.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
+      setTimeout(() => { alertArea.innerHTML = ''; }, 4000);
+    }
+  </script>
+</body>
+</html>
