@@ -338,6 +338,9 @@
             <span id="progressEta"></span>
           </div>
           <div class="log" id="logOutput"></div>
+          <div style="margin-top: var(--spacing-md); display: flex; justify-content: flex-end;">
+            <button class="btn btn-secondary" id="abortBtn">Stop</button>
+          </div>
         </div>
       </div>
 
@@ -414,6 +417,7 @@
     const downloadBtn     = document.getElementById('downloadBtn');
     const resetBtn        = document.getElementById('resetBtn');
     const modeBadge       = document.getElementById('modeBadge');
+    const abortBtn        = document.getElementById('abortBtn');
     const alertArea       = document.getElementById('alertArea');
 
     modeBadge.textContent = MT_AVAILABLE ? 'Multi-threaded' : 'Single-threaded';
@@ -600,6 +604,15 @@
     cancelBtn.addEventListener('click', reset);
     resetBtn.addEventListener('click', reset);
 
+    abortBtn.addEventListener('click', () => {
+      if (ffmpeg) {
+        try { ffmpeg.terminate(); } catch {}
+        ffmpeg = null; // force a clean reload next time
+      }
+      appendLog('Aborted by user.');
+      reset();
+    });
+
     function reset() {
       currentFile = null;
       outputBlob = null;
@@ -688,17 +701,23 @@
       const preset = presetSelect.value;
       const maxH = resolveTargetHeight();
 
-      const args = ['-i', input];
+      // stats_period forces ffmpeg to emit progress lines every 2s even if
+      // frames are coming out slowly. Global option — goes before -i.
+      const args = ['-stats_period', '2', '-i', input];
 
-      // Scale only if source is larger than the cap. Infinity = keep source.
+      const filters = [];
       if (isFinite(maxH) && (!srcHeight || srcHeight > maxH)) {
-        args.push('-vf', `scale=-2:min(${maxH}\\,ih)`);
+        filters.push(`scale=-2:min(${maxH}\\,ih)`);
       }
+      // Force 8-bit 4:2:0 in the filter chain. Leaving 10-bit conversion
+      // to -pix_fmt at the encoder stage can hang on some HEVC sources.
+      if (codec !== 'h265') filters.push('format=yuv420p');
+      if (filters.length) args.push('-vf', filters.join(','));
 
       if (codec === 'h265') {
         args.push('-c:v', 'libx265', '-preset', preset, '-tag:v', 'hvc1');
       } else {
-        args.push('-c:v', 'libx264', '-preset', preset, '-profile:v', 'high', '-pix_fmt', 'yuv420p');
+        args.push('-c:v', 'libx264', '-preset', preset);
       }
 
       args.push(
@@ -708,7 +727,6 @@
         '-c:a', 'aac',
         '-b:a', `${audioKbps}k`,
         '-movflags', '+faststart',
-        '-threads', '0',
         '-y',
         output
       );
