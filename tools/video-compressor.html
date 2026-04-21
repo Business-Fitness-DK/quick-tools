@@ -118,6 +118,39 @@
       margin-bottom: var(--spacing-sm);
     }
 
+    .progress-eta {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: var(--spacing-xs);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .estimate {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: #F4F8FF;
+      border: 1px solid #DCEAFF;
+      border-radius: var(--radius);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .estimate-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+
+    .estimate-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
     .progress-bar {
       height: 6px;
       background: var(--border-light);
@@ -258,24 +291,30 @@
             <div class="field">
               <label for="preset">Speed preset</label>
               <select id="preset">
-                <option value="ultrafast">Ultrafast (largest file, fastest)</option>
+                <option value="ultrafast">Ultrafast (~2× faster, lower quality)</option>
                 <option value="veryfast" selected>Veryfast (recommended)</option>
-                <option value="fast">Fast</option>
-                <option value="medium">Medium (smallest file, slowest)</option>
+                <option value="fast">Fast (~30% slower, slightly sharper)</option>
+                <option value="medium">Medium (~3× slower, best quality per MB)</option>
               </select>
-              <div class="hint">Faster presets produce slightly larger files for the same quality.</div>
+              <div class="hint">All presets produce the same file size at your target — slower presets just pack more detail into the same bits.</div>
             </div>
             <div class="field">
               <label for="resolution">Resolution</label>
               <select id="resolution">
-                <option value="source" selected>Keep source</option>
+                <option value="auto" selected>Auto (recommended)</option>
+                <option value="source">Keep source</option>
                 <option value="1080">Max 1080p</option>
                 <option value="720">Max 720p</option>
                 <option value="480">Max 480p</option>
               </select>
-              <div class="hint">Downscaling large sources is the single biggest speed win.</div>
+              <div class="hint" id="resolutionHint">Picks the best resolution for your target size.</div>
             </div>
           </div>
+        </div>
+
+        <div class="estimate" id="estimateBox">
+          <span class="estimate-label">Estimated encode time</span>
+          <span class="estimate-value" id="estimateValue">—</span>
         </div>
 
         <div class="actions">
@@ -293,6 +332,10 @@
           </div>
           <div class="progress-bar">
             <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-eta">
+            <span id="progressSpeed"></span>
+            <span id="progressEta"></span>
           </div>
           <div class="log" id="logOutput"></div>
         </div>
@@ -314,8 +357,9 @@
   </main>
 
   <!-- ffmpeg.wasm UMD loader -->
+  <!-- @ffmpeg/util UMD has a bundler bug that prevents the global from being exposed,
+       so we inline the two helpers we need (fetchFile, toBlobURL) below. -->
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
 
   <script>
     const FFMPEG_VERSION = '0.12.15';
@@ -325,6 +369,24 @@
       typeof SharedArrayBuffer !== 'undefined' &&
       typeof self !== 'undefined' &&
       self.crossOriginIsolated === true;
+
+    // Inlined @ffmpeg/util helpers (upstream UMD bundle is broken at v0.12.2)
+    async function fetchFile(input) {
+      if (typeof input === 'string' || input instanceof URL) {
+        const res = await fetch(input);
+        return new Uint8Array(await res.arrayBuffer());
+      }
+      if (input instanceof File || input instanceof Blob) {
+        return new Uint8Array(await input.arrayBuffer());
+      }
+      return new Uint8Array();
+    }
+
+    async function toBlobURL(url, mimeType) {
+      const res = await fetch(url);
+      const buf = await res.arrayBuffer();
+      return URL.createObjectURL(new Blob([buf], { type: mimeType }));
+    }
 
     // UI refs
     const uploadSection   = document.getElementById('uploadSection');
@@ -347,6 +409,10 @@
     const progressStage   = document.getElementById('progressStage');
     const progressPercent = document.getElementById('progressPercent');
     const progressFill    = document.getElementById('progressFill');
+    const progressSpeed   = document.getElementById('progressSpeed');
+    const progressEta     = document.getElementById('progressEta');
+    const estimateValue   = document.getElementById('estimateValue');
+    const resolutionHint  = document.getElementById('resolutionHint');
     const logOutput       = document.getElementById('logOutput');
     const doneSummary     = document.getElementById('doneSummary');
     const downloadBtn     = document.getElementById('downloadBtn');
@@ -402,11 +468,10 @@
       infoDuration.textContent = formatDuration(durationSec);
       infoResolution.textContent = srcWidth && srcHeight ? `${srcWidth}×${srcHeight}` : 'Unknown';
 
-      // Default target size: 20 MB or 25% of source, whichever is larger, capped at source size
+      // Default target size: 20 MB, capped at source size (never inflate)
       const srcMB = file.size / (1024 * 1024);
-      const defaultTarget = Math.min(srcMB, Math.max(20, Math.round(srcMB * 0.25)));
-      targetSizeInput.value = defaultTarget;
-      updateBitrateHint();
+      targetSizeInput.value = Math.max(1, Math.min(20, Math.round(srcMB)));
+      updateEstimates();
 
       uploadSection.classList.add('hidden');
       settingsSection.classList.remove('hidden');
@@ -431,23 +496,109 @@
       });
     }
 
-    targetSizeInput.addEventListener('input', updateBitrateHint);
-    function updateBitrateHint() {
-      const mb = parseFloat(targetSizeInput.value);
-      if (!mb || !durationSec) {
-        bitrateHint.textContent = 'Bitrate will be calculated from duration.';
-        return;
-      }
-      const { videoKbps, audioKbps } = calcBitrates(mb, durationSec);
-      bitrateHint.textContent = `≈ ${videoKbps} kbps video + ${audioKbps} kbps audio`;
-    }
+    // Live-update estimates when any setting changes
+    ['input', 'change'].forEach(ev => {
+      targetSizeInput.addEventListener(ev, updateEstimates);
+    });
+    codecSelect.addEventListener('change', updateEstimates);
+    presetSelect.addEventListener('change', updateEstimates);
+    resolutionSelect.addEventListener('change', updateEstimates);
 
     function calcBitrates(targetMB, seconds) {
-      const totalKbits = targetMB * 8 * 1024; // MB → kbit
+      const totalKbits = targetMB * 8 * 1024;
       const audioKbps = 128;
-      const overheadPct = 0.97; // container overhead
-      let videoKbps = Math.max(100, Math.floor((totalKbits / seconds) * overheadPct - audioKbps));
+      const overheadPct = 0.97;
+      const videoKbps = Math.max(100, Math.floor((totalKbits / seconds) * overheadPct - audioKbps));
       return { videoKbps, audioKbps };
+    }
+
+    // Pick resolution based on the bitrate budget. Never upscales.
+    function recommendResolutionHeight(videoKbps) {
+      if (videoKbps < 500) return 480;
+      if (videoKbps < 1500) return 720;
+      if (videoKbps < 4000) return 1080;
+      return Infinity; // keep source
+    }
+
+    // Resolves the current resolution selection to a numeric max height (or Infinity = source).
+    function resolveTargetHeight() {
+      const sel = resolutionSelect.value;
+      if (sel === 'source') return Infinity;
+      if (sel === 'auto') {
+        if (!durationSec) return Infinity;
+        const mb = parseFloat(targetSizeInput.value) || 0;
+        const { videoKbps } = calcBitrates(mb, durationSec);
+        return recommendResolutionHeight(videoKbps);
+      }
+      return parseInt(sel, 10);
+    }
+
+    // Returns the effective output height after applying the cap (won't upscale).
+    function effectiveOutHeight() {
+      const target = resolveTargetHeight();
+      if (!srcHeight) return target === Infinity ? 720 : target;
+      return Math.min(srcHeight, target);
+    }
+
+    // Rough encode-time estimate (seconds of wall-clock).
+    // Calibrated to: H.264, veryfast, 720p, multi-threaded = 1× real-time on a modern laptop.
+    // Device-dependent — treat as ballpark. Live ETA during encode is accurate.
+    function estimateEncodeSeconds() {
+      if (!durationSec) return null;
+      const codec = codecSelect.value;
+      const preset = presetSelect.value;
+      const outH = effectiveOutHeight();
+      const outHRef = isFinite(outH) ? outH : (srcHeight || 720);
+
+      let factor = 1.0; // baseline: real-time
+      // Preset (relative to veryfast)
+      factor *= ({ ultrafast: 0.5, veryfast: 1.0, fast: 1.5, medium: 3.0 })[preset] || 1.0;
+      // Codec
+      if (codec === 'h265') factor *= 4.0;
+      // Thread mode
+      if (!MT_AVAILABLE) factor *= 3.0;
+      // Resolution — encode time scales roughly with pixel count
+      const pixRatio = (outHRef * outHRef) / (720 * 720); // height^2 approximation
+      factor *= pixRatio;
+
+      return durationSec * factor;
+    }
+
+    function updateEstimates() {
+      const mb = parseFloat(targetSizeInput.value);
+
+      // Bitrate hint under target size
+      if (!mb || !durationSec) {
+        bitrateHint.textContent = 'Bitrate will be calculated from duration.';
+      } else {
+        const { videoKbps, audioKbps } = calcBitrates(mb, durationSec);
+        bitrateHint.textContent = `≈ ${videoKbps} kbps video + ${audioKbps} kbps audio`;
+      }
+
+      // Resolution hint — explain what Auto resolves to
+      const outH = effectiveOutHeight();
+      if (resolutionSelect.value === 'auto') {
+        if (!srcHeight || !durationSec) {
+          resolutionHint.textContent = 'Picks the best resolution for your target size.';
+        } else if (!isFinite(outH) || srcHeight <= outH) {
+          resolutionHint.textContent = `Auto → keep source (${srcWidth}×${srcHeight}) — your target size is generous enough.`;
+        } else {
+          resolutionHint.textContent = `Auto → ${outH}p — downscaling helps quality fit your target size.`;
+        }
+      } else if (resolutionSelect.value === 'source') {
+        resolutionHint.textContent = 'Uses the original resolution.';
+      } else {
+        resolutionHint.textContent = `Caps at ${resolutionSelect.value}p (won't upscale smaller sources).`;
+      }
+
+      // Encode time estimate
+      const secs = estimateEncodeSeconds();
+      if (!secs) {
+        estimateValue.textContent = '—';
+      } else {
+        const lo = secs * 0.7, hi = secs * 1.5;
+        estimateValue.textContent = `~${formatEta(lo)}–${formatEta(hi)}`;
+      }
     }
 
     cancelBtn.addEventListener('click', reset);
@@ -465,11 +616,15 @@
       progressFill.style.width = '0%';
       progressFill.classList.remove('indeterminate');
       progressPercent.textContent = '0%';
+      progressSpeed.textContent = '';
+      progressEta.textContent = '';
       alertArea.innerHTML = '';
     }
 
     // --- Compression ---
     compressBtn.addEventListener('click', runCompression);
+
+    let encodeStartTime = 0;
 
     async function runCompression() {
       const targetMB = parseFloat(targetSizeInput.value);
@@ -480,6 +635,8 @@
       progressSection.classList.remove('hidden');
       progressFill.style.width = '0%';
       progressPercent.textContent = '';
+      progressSpeed.textContent = '';
+      progressEta.textContent = '';
       progressFill.classList.add('indeterminate');
       progressStage.textContent = 'Loading FFmpeg engine (~30 MB, one-time)…';
       logOutput.textContent = '';
@@ -488,7 +645,6 @@
         await loadFFmpeg();
 
         progressStage.textContent = 'Reading file…';
-        const { fetchFile } = FFmpegUtil;
         const inputName = 'input' + (currentFile.name.match(/\.[^.]+$/)?.[0] || '.mp4');
         await ffmpeg.writeFile(inputName, await fetchFile(currentFile));
 
@@ -500,6 +656,7 @@
         const args = buildFFmpegArgs(inputName, 'output.mp4', targetMB);
         appendLog('$ ffmpeg ' + args.join(' '));
 
+        encodeStartTime = Date.now();
         await ffmpeg.exec(args);
 
         progressStage.textContent = 'Packaging…';
@@ -531,17 +688,13 @@
       const { videoKbps, audioKbps } = calcBitrates(targetMB, durationSec);
       const codec = codecSelect.value;
       const preset = presetSelect.value;
-      const resOpt = resolutionSelect.value;
+      const maxH = resolveTargetHeight();
 
       const args = ['-i', input];
 
-      // Scale filter if requested, only if source is larger than target height
-      if (resOpt !== 'source') {
-        const maxH = parseInt(resOpt, 10);
-        if (!srcHeight || srcHeight > maxH) {
-          // Scale keeping aspect ratio; ensure even dimensions for H.264/265
-          args.push('-vf', `scale=-2:min(${maxH}\\,ih)`);
-        }
+      // Scale only if source is larger than the cap. Infinity = keep source.
+      if (isFinite(maxH) && (!srcHeight || srcHeight > maxH)) {
+        args.push('-vf', `scale=-2:min(${maxH}\\,ih)`);
       }
 
       if (codec === 'h265') {
@@ -567,14 +720,25 @@
     async function loadFFmpeg() {
       if (ffmpeg) return ffmpeg;
       const { FFmpeg } = FFmpegWASM;
-      const { toBlobURL } = FFmpegUtil;
 
       ffmpeg = new FFmpeg();
       ffmpeg.on('log', ({ message }) => appendLog(message));
-      ffmpeg.on('progress', ({ progress }) => {
+      ffmpeg.on('progress', ({ progress, time }) => {
         const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
         progressFill.style.width = pct + '%';
         progressPercent.textContent = pct + '%';
+
+        if (encodeStartTime && time && durationSec) {
+          const wallElapsed = (Date.now() - encodeStartTime) / 1000;
+          const videoProcessed = time / 1_000_000; // microseconds → seconds of video
+          if (wallElapsed > 0.5 && videoProcessed > 0) {
+            const speed = videoProcessed / wallElapsed; // e.g. 2.0 = 2x real-time
+            const remaining = Math.max(0, durationSec - videoProcessed);
+            const etaSec = remaining / speed;
+            progressSpeed.textContent = `${speed.toFixed(2)}× real-time`;
+            progressEta.textContent = `ETA ${formatEta(etaSec)}`;
+          }
+        }
       });
 
       const corePkg = MT_AVAILABLE ? 'core-mt' : 'core';
@@ -589,6 +753,17 @@
       }
       await ffmpeg.load(cfg);
       return ffmpeg;
+    }
+
+    function formatEta(seconds) {
+      if (!isFinite(seconds) || seconds < 0) return '—';
+      if (seconds < 60) return `${Math.round(seconds)}s`;
+      const m = Math.floor(seconds / 60);
+      const s = Math.round(seconds % 60);
+      if (m < 60) return s === 0 ? `${m}m` : `${m}m ${s}s`;
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      return `${h}h ${mm}m`;
     }
 
     // --- Download ---
