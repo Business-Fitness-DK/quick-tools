@@ -636,6 +636,8 @@
       progressFill.classList.add('indeterminate');
       progressStage.textContent = 'Loading FFmpeg engine (~30 MB, one-time)…';
       logOutput.textContent = '';
+      appendLog(`Mode: ${MT_AVAILABLE ? 'multi-threaded (SAB active)' : 'single-threaded'}`);
+      appendLog(`Origin: ${location.origin}`);
 
       try {
         await loadFFmpeg();
@@ -718,6 +720,18 @@
       const { FFmpeg } = FFmpegWASM;
 
       ffmpeg = new FFmpeg();
+
+      // Surface any unhandled errors from the spawned workers that would
+      // otherwise hang the LOAD promise silently.
+      window.addEventListener('error', (e) => {
+        if (e.filename && e.filename.includes('/vendor/')) {
+          appendLog(`WORKER ERROR: ${e.message} @ ${e.filename}:${e.lineno}`);
+        }
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        appendLog(`UNHANDLED: ${e.reason?.message || e.reason}`);
+      });
+
       ffmpeg.on('log', ({ message }) => appendLog(message));
       ffmpeg.on('progress', ({ progress, time }) => {
         const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
@@ -737,19 +751,30 @@
         }
       });
 
-      // All URLs same-origin via Vercel rewrite to jsdelivr. classWorkerURL
-      // is intentionally unset — passing it would force {type:"module"},
-      // which doesn't work for the UMD build's classic worker chunks.
+      // All URLs same-origin via Vercel rewrite to jsdelivr. Pass only
+      // coreURL (matches the official vanilla-app example) — emscripten
+      // auto-resolves the .wasm and pthread .worker.js as siblings.
+      // classWorkerURL is intentionally unset — passing it forces
+      // {type:"module"} which breaks UMD classic-worker chunks.
       const corePkg = MT_AVAILABLE ? 'core-mt' : 'core';
-      const cfg = {
-        coreURL: `/vendor/${corePkg}/ffmpeg-core.js`,
-        wasmURL: `/vendor/${corePkg}/ffmpeg-core.wasm`,
-      };
-      if (MT_AVAILABLE) {
-        cfg.workerURL = `/vendor/${corePkg}/ffmpeg-core.worker.js`;
-      }
-      await ffmpeg.load(cfg);
+      const cfg = { coreURL: `/vendor/${corePkg}/ffmpeg-core.js` };
+
+      appendLog(`Loading core from /vendor/${corePkg}/ (MT=${MT_AVAILABLE})…`);
+      await withTimeout(
+        ffmpeg.load(cfg),
+        60_000,
+        'ffmpeg.load() timed out after 60s — check the log above for errors.'
+      );
+      appendLog('Core loaded.');
       return ffmpeg;
+    }
+
+    function withTimeout(promise, ms, message) {
+      let timer;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), ms);
+      });
+      return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
     }
 
     function formatEta(seconds) {
