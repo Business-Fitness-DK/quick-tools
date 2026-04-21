@@ -370,10 +370,11 @@
     const FFMPEG_VERSION = '0.12.15';
     const CORE_VERSION = '0.12.10';
 
-    const MT_AVAILABLE =
-      typeof SharedArrayBuffer !== 'undefined' &&
-      typeof self !== 'undefined' &&
-      self.crossOriginIsolated === true;
+    // Single-threaded core only. The multi-threaded core's fixed pthread
+    // pool deadlocks during libx264 init on heavy inputs (HEVC 10-bit,
+    // high-res), hanging right after "Stream mapping:" with no further
+    // output. Single-thread is ~3× slower but never hangs.
+    const MT_AVAILABLE = false;
 
     // Inlined @ffmpeg/util fetchFile (upstream UMD bundle is broken at v0.12.2).
     async function fetchFile(input) {
@@ -420,8 +421,8 @@
     const abortBtn        = document.getElementById('abortBtn');
     const alertArea       = document.getElementById('alertArea');
 
-    modeBadge.textContent = MT_AVAILABLE ? 'Multi-threaded' : 'Single-threaded';
-    modeBadge.className = 'badge' + (MT_AVAILABLE ? '' : ' warn');
+    modeBadge.textContent = 'Single-threaded';
+    modeBadge.className = 'badge';
 
     // State
     let currentFile = null;
