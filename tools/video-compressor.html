@@ -185,9 +185,55 @@
       padding: 0.75rem;
       max-height: 120px;
       overflow: auto;
-      margin-top: var(--spacing-md);
+      margin-top: var(--spacing-sm);
       white-space: pre-wrap;
       line-height: 1.5;
+    }
+
+    .log-details {
+      margin-top: var(--spacing-md);
+    }
+
+    .log-details summary {
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      user-select: none;
+      padding: 0.25rem 0;
+      list-style: none;
+      display: inline-block;
+    }
+
+    .log-details summary::-webkit-details-marker { display: none; }
+    .log-details summary::before {
+      content: '▸ ';
+      display: inline-block;
+      transition: transform 0.15s;
+    }
+    .log-details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    .log-details summary:hover { color: var(--text-secondary); }
+
+    .callout {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: flex-start;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      margin-bottom: var(--spacing-lg);
+    }
+    .callout.warn {
+      background: #FFF4E5;
+      border: 1px solid #FFE0B2;
+      color: #8A5A00;
+    }
+    .callout .callout-icon {
+      flex-shrink: 0;
+      font-size: 1rem;
+      line-height: 1.2;
     }
 
     .actions {
@@ -251,6 +297,16 @@
 
       <!-- Step 2: Settings -->
       <div id="settingsSection" class="hidden">
+        <div id="codecWarning" class="callout warn hidden">
+          <span class="callout-icon">⚠</span>
+          <div>
+            <strong>HEVC source detected.</strong>
+            Browser encoding is slower for HEVC (especially 10-bit) — for a
+            3-minute clip expect roughly 10–25 minutes. Shorter clips or H.264 sources
+            compress much faster.
+          </div>
+        </div>
+
         <div class="file-info">
           <div>
             <div class="info-label">File</div>
@@ -337,7 +393,10 @@
             <span id="progressSpeed"></span>
             <span id="progressEta"></span>
           </div>
-          <div class="log" id="logOutput"></div>
+          <details class="log-details">
+            <summary>Show technical log</summary>
+            <div class="log" id="logOutput"></div>
+          </details>
           <div style="margin-top: var(--spacing-md); display: flex; justify-content: flex-end;">
             <button class="btn btn-secondary" id="abortBtn">Stop</button>
           </div>
@@ -419,6 +478,7 @@
     const resetBtn        = document.getElementById('resetBtn');
     const modeBadge       = document.getElementById('modeBadge');
     const abortBtn        = document.getElementById('abortBtn');
+    const codecWarning    = document.getElementById('codecWarning');
     const alertArea       = document.getElementById('alertArea');
 
     modeBadge.textContent = 'Single-threaded';
@@ -474,8 +534,41 @@
       targetSizeInput.value = Math.max(1, Math.min(20, Math.round(srcMB)));
       updateEstimates();
 
+      // Scan the MP4 header for HEVC codec tags so the user knows upfront
+      // that encoding will be slow. Non-blocking — warning pops in if found.
+      codecWarning.classList.add('hidden');
+      detectHEVC(file).then((isHEVC) => {
+        if (isHEVC) codecWarning.classList.remove('hidden');
+      });
+
       uploadSection.classList.add('hidden');
       settingsSection.classList.remove('hidden');
+    }
+
+    // Look for 'hvc1' or 'hev1' FourCC codec tags in the MP4's stsd box.
+    // Scans the first 2 MB — moov usually lives there unless the file was
+    // streaming-optimized. False-positive rate is negligible because
+    // FourCC tags occur at structured offsets, not random byte positions.
+    async function detectHEVC(file) {
+      try {
+        const chunk = await file.slice(0, 2 * 1024 * 1024).arrayBuffer();
+        const bytes = new Uint8Array(chunk);
+        const hvc1 = [0x68, 0x76, 0x63, 0x31]; // "hvc1"
+        const hev1 = [0x68, 0x65, 0x76, 0x31]; // "hev1"
+        return findBytes(bytes, hvc1) || findBytes(bytes, hev1);
+      } catch {
+        return false;
+      }
+    }
+
+    function findBytes(haystack, needle) {
+      outer: for (let i = 0; i <= haystack.length - needle.length; i++) {
+        for (let j = 0; j < needle.length; j++) {
+          if (haystack[i + j] !== needle[j]) continue outer;
+        }
+        return true;
+      }
+      return false;
     }
 
     function probeVideo(file) {
@@ -628,6 +721,7 @@
       progressPercent.textContent = '0%';
       progressSpeed.textContent = '';
       progressEta.textContent = '';
+      codecWarning.classList.add('hidden');
       alertArea.innerHTML = '';
     }
 
