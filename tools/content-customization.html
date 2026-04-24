@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Customization Survey</title>
+  <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+  <link rel="stylesheet" href="../assets/css/brand.css">
+  <style>
+    .survey-container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      margin-bottom: var(--spacing-xl);
+    }
+    .progress-bar-track {
+      height: 4px;
+      background: var(--border-light);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.5rem;
+    }
+
+    /* Slides */
+    .slide {
+      display: none;
+    }
+    .slide.active {
+      display: block;
+    }
+
+    .slide-card {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .slide-heading {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .slide-subheading {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    /* Intro slide */
+    .intro-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+    .intro-brand {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-lg);
+    }
+    .intro-body {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* Tooltip / help text */
+    .help-text {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .tooltip-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-tertiary);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      cursor: default;
+      position: relative;
+    }
+    .tooltip-icon:hover .tooltip-popup {
+      display: block;
+    }
+    .tooltip-popup {
+      display: none;
+      position: absolute;
+      left: 20px;
+      top: -4px;
+      background: var(--text-primary);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 400;
+      padding: 0.4rem 0.6rem;
+      border-radius: var(--radius);
+      white-space: nowrap;
+      z-index: 100;
+      max-width: 260px;
+      white-space: normal;
+      line-height: 1.4;
+    }
+
+    /* Radio + checkbox groups */
+    .option-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: var(--spacing-md);
+    }
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .option-item:hover {
+      background: var(--surface-hover);
+    }
+    .option-item input[type="radio"],
+    .option-item input[type="checkbox"] {
+      margin-top: 2px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .option-item label {
+      cursor: pointer;
+      font-size: 0.9375rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    /* Conditional reveal */
+    .conditional {
+      display: none;
+    }
+    .conditional.visible {
+      display: block;
+    }
+
+    /* Nav buttons */
+    .slide-nav {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+    }
+    .btn-back {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-back:hover {
+      background: var(--surface-hover);
+    }
+
+    /* Error banner inside slide */
+    .slide-error {
+      display: none;
+      background: #fff0f0;
+      border: 1px solid #fcc;
+      color: #c00;
+      font-size: 0.875rem;
+      padding: 0.75rem var(--spacing-md);
+      border-radius: var(--radius);
+      margin-top: var(--spacing-md);
+    }
+    .slide-error.visible {
+      display: block;
+    }
+
+    /* Success slide */
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      background: #e6f9f0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin-bottom: var(--spacing-lg);
+    }
+    .success-heading {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+    }
+    .success-body {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="logo">
+        <img src="../assets/images/logo.png" alt="Logo">
+        <span class="logo-text">Quick Tools from Business & Fitness</span>
+      </a>
+      <a href="../index.html" class="back-link">Back</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="survey-container">
+
+      <!-- Progress bar (hidden on intro + success) -->
+      <div class="progress-wrap" id="progressWrap" style="display:none;">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="progressLabel"></div>
+      </div>
+
+      <!-- ── Slide 1: Intro ─────────────────────────────────────────── -->
+      <section class="slide active" id="slide-1">
+        <div class="slide-card">
+          <div class="intro-title">Help Us Customize Your Content</div>
+          <div class="intro-brand">Business & Fitness</div>
+          <p class="intro-body">Answer these questions once so we can tailor all your emails and SMS to your gym, members, and offers.</p>
+          <button class="btn btn-primary" style="width:100%; padding:1rem; font-size:1.0625rem;" onclick="goTo(2)">Start</button>
+        </div>
+      </section>
+
+      <!-- ── Slide 2: Identification ────────────────────────────────── -->
+      <section class="slide" id="slide-2">
+        <div class="slide-card">
+          <div class="slide-heading">Let's start with your details</div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email address <span style="color:var(--error)">*</span></label>
+            <input type="email" id="email" class="form-input" placeholder="you@yourgym.com" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label tooltip-wrap">
+              Location ID <span style="color:var(--error)">*</span>
+              <span class="tooltip-icon">?
+                <span class="tooltip-popup">Your GHL sub-account ID. Find it in Settings &rarr; Company &rarr; Location ID</span>
+              </span>
+            </label>
+            <input type="text" id="location_id" class="form-input" placeholder="e.g. abc123XYZ" required>
+          </div>
+
+          <div class="slide-error" id="error-2"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(1)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="nextSlide(2)">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 3: About Your Gym & Members ─────────────────────── -->
+      <section class="slide" id="slide-3">
+        <div class="slide-card">
+          <div class="slide-heading">1. About Your Gym & Members</div>
+          <div class="slide-subheading">Who is your typical member?</div>
+
+          <div class="form-group">
+            <label class="form-label" for="age_range">Age range <span style="color:var(--error)">*</span></label>
+            <input type="text" id="age_range" class="form-input" placeholder="e.g. 30–50" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gender_mix">Gender mix <span style="color:var(--error)">*</span></label>
+            <input type="text" id="gender_mix" class="form-input" placeholder="mostly women / mostly men / 50-50" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="daily_life">What do they do in daily life? <span style="color:var(--error)">*</span></label>
+            <input type="text" id="daily_life" class="form-input" placeholder="e.g. office workers, parents, shift workers" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="top_join_reasons">Top 2–3 reasons they join your gym <span style="color:var(--error)">*</span></label>
+            <textarea id="top_join_reasons" class="form-input" rows="3" required></textarea>
+            <div class="help-text">e.g. lose weight, feel better, get stronger, back pain, community, stress relief</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="main_result_sentence">Main result in one sentence <span style="color:var(--error)">*</span></label>
+            <textarea id="main_result_sentence" class="form-input" rows="2" required></textarea>
+            <div class="help-text">Example: "We help busy adults 35–55 lose 8–10 kg and feel fitter in 12 weeks."</div>
+          </div>
+
+          <div class="slide-error" id="error-3"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(2)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="nextSlide(3)">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 4: Services & Training Style ────────────────────── -->
+      <section class="slide" id="slide-4">
+        <div class="slide-card">
+          <div class="slide-heading">2. Your Services & Training Style</div>
+
+          <div class="form-group">
+            <label class="form-label">Main type of training/service <span style="color:var(--error)">*</span></label>
+            <div class="help-text" style="margin-bottom:0.75rem;">Choose the ONE option that at least 80% of your members do (don't tick everything you offer).</div>
+            <div class="option-list" id="service_type_list">
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="CrossFit (licensed)">
+                <label>CrossFit (licensed)</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Functional fitness (non-CrossFit)">
+                <label>Functional fitness (non-CrossFit)</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="General fitness classes (non-CrossFit)">
+                <label>General fitness classes (non-CrossFit)</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Strength & conditioning">
+                <label>Strength &amp; conditioning</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="HYROX training">
+                <label>HYROX training</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Bootcamp">
+                <label>Bootcamp</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Yoga / Pilates">
+                <label>Yoga / Pilates</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Personal training / semi-private (as main service)">
+                <label>Personal training / semi-private (as main service)</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Nutrition coaching (as main service)">
+                <label>Nutrition coaching (as main service)</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="main_service_type" value="Other">
+                <label>Other (please describe below)</label>
+              </label>
+            </div>
+            <div class="conditional" id="cond_service_other">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="main_service_type_other">Describe your main training type</label>
+                <input type="text" id="main_service_type_other" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="training_style_description">How would you describe your training style to a new member? <span style="color:var(--error)">*</span></label>
+            <textarea id="training_style_description" class="form-input" rows="4" required></textarea>
+            <div class="help-text">In 2–3 sentences. Plain language, how you'd explain it to a friend.</div>
+          </div>
+
+          <div class="slide-error" id="error-4"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(3)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="nextSlide(4)">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 5: Front-End Offers ─────────────────────────────── -->
+      <section class="slide" id="slide-5">
+        <div class="slide-card">
+          <div class="slide-heading">3. Front-End Offers & First Step</div>
+
+          <div class="form-group">
+            <label class="form-label" for="first_step_general_description">How do people usually join your gym? What is the first thing you offer them to get started? <span style="color:var(--error)">*</span></label>
+            <textarea id="first_step_general_description" class="form-input" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Which first-step offers do you currently use? <span style="color:var(--error)">*</span></label>
+            <div class="help-text" style="margin-bottom:0.75rem;">Tick all that apply and write the exact name you use.</div>
+            <div class="option-list">
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Free Intro / No Sweat Intro / First Step Intro">
+                <label>Free Intro / No Sweat Intro / First Step Intro</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Free trial class">
+                <label>Free trial class</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Free week / 7-day pass">
+                <label>Free week / 7-day pass</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Introduction program (free, multi-session)">
+                <label>Introduction program (free, multi-session)</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Introduction program (paid, multi-session)">
+                <label>Introduction program (paid, multi-session)</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Direct to membership">
+                <label>Direct to membership</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="PT consult">
+                <label>PT consult</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="first_step_offers" value="Other" id="offers_other_check">
+                <label>Other</label>
+              </label>
+            </div>
+            <div class="conditional" id="cond_offers_other">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="first_step_offers_other">Exact name of your other offer</label>
+                <input type="text" id="first_step_offers_other" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="first_step_details">For each of the offers above, write a short description of what they get and how long it lasts. <span style="color:var(--error)">*</span></label>
+            <textarea id="first_step_details" class="form-input" rows="4" required></textarea>
+          </div>
+
+          <div class="slide-error" id="error-5"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(4)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="nextSlide(5)">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 6: Goal Reviews ───────────────────────────────────── -->
+      <section class="slide" id="slide-6">
+        <div class="slide-card">
+          <div class="slide-heading">4. Goal Reviews & Check-Ins</div>
+
+          <div class="form-group">
+            <label class="form-label">Do you offer Goal Reviews or Goal Setting sessions? <span style="color:var(--error)">*</span></label>
+            <div class="option-list">
+              <label class="option-item">
+                <input type="radio" name="goal_reviews_offered" value="yes" id="goal_reviews_yes">
+                <label>Yes</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="goal_reviews_offered" value="no" id="goal_reviews_no">
+                <label>No</label>
+              </label>
+            </div>
+          </div>
+
+          <div class="conditional" id="cond_goal_reviews_yes">
+            <div class="form-group">
+              <label class="form-label" for="goal_reviews_name">What do you call them?</label>
+              <input type="text" id="goal_reviews_name" class="form-input" placeholder="e.g. Progress Check-In, Goal Review">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="goal_reviews_frequency">How often do you aim to do them?</label>
+              <input type="text" id="goal_reviews_frequency" class="form-input" placeholder="e.g. every 30 days, every 90 days">
+            </div>
+          </div>
+
+          <div class="conditional" id="cond_goal_reviews_no">
+            <div class="form-group">
+              <label class="form-label" for="goal_reviews_alternative">What do you usually do instead to keep people on track?</label>
+              <textarea id="goal_reviews_alternative" class="form-input" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="slide-error" id="error-6"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(5)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="nextSlide(6)">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 7: Brand Voice & Values ─────────────────────────── -->
+      <section class="slide" id="slide-7">
+        <div class="slide-card">
+          <div class="slide-heading">5. Brand Voice & Values</div>
+
+          <div class="form-group">
+            <label class="form-label">How should your gym sound in messages? (pick up to 2) <span style="color:var(--error)">*</span></label>
+            <div class="option-list" id="brand_tone_list">
+              <label class="option-item">
+                <input type="checkbox" name="brand_tone_pick" value="Friendly community coach">
+                <label>Friendly community coach</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="brand_tone_pick" value="Direct and performance-driven">
+                <label>Direct and performance-driven</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="brand_tone_pick" value="Calm and wellness-focused">
+                <label>Calm and wellness-focused</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="brand_tone_pick" value="Professional / clinical">
+                <label>Professional / clinical</label>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="brand_tone_pick" value="Other" id="brand_tone_other_check">
+                <label>Other (please describe)</label>
+              </label>
+            </div>
+            <div class="conditional" id="cond_brand_tone_other">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="brand_tone_other">Describe your tone</label>
+                <input type="text" id="brand_tone_other" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gym_tone_description">My gym's tone</label>
+            <textarea id="gym_tone_description" class="form-input" rows="2" placeholder="Anything else about tone?"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="core_values">What are 3–5 core values or beliefs you want reflected in your messages? <span style="color:var(--error)">*</span></label>
+            <textarea id="core_values" class="form-input" rows="3" required></textarea>
+            <div class="help-text">Examples: "No meathead culture", "Everyone is welcome", "Strong over skinny", "Long-term health, not quick fixes"</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="banned_words">Are there any words, phrases, or tones you NEVER want us to use?</label>
+            <textarea id="banned_words" class="form-input" rows="3"></textarea>
+            <div class="help-text">Examples: "beast mode", body shaming, extreme diet talk, cursing, cheesy fitness quotes.</div>
+          </div>
+
+          <div class="slide-error" id="error-7"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(6)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="nextSlide(7)">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 8: Extra Services & Limits ──────────────────────── -->
+      <section class="slide" id="slide-8">
+        <div class="slide-card">
+          <div class="slide-heading">6. Extra Services & Limits</div>
+
+          <div class="form-group">
+            <label class="form-label">Do you offer nutrition coaching? <span style="color:var(--error)">*</span></label>
+            <div class="option-list">
+              <label class="option-item">
+                <input type="radio" name="nutrition_offered" value="yes">
+                <label>Yes</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="nutrition_offered" value="no">
+                <label>No</label>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Do you offer personal training or semi-private training? <span style="color:var(--error)">*</span></label>
+            <div class="option-list">
+              <label class="option-item">
+                <input type="radio" name="pt_offered" value="yes">
+                <label>Yes</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="pt_offered" value="no">
+                <label>No</label>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Do you contact inactive members to help them use their membership? <span style="color:var(--error)">*</span></label>
+            <div class="option-list">
+              <label class="option-item">
+                <input type="radio" name="inactive_member_outreach" value="yes" id="outreach_yes">
+                <label>Yes</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="inactive_member_outreach" value="no" id="outreach_no">
+                <label>No</label>
+              </label>
+            </div>
+            <div class="conditional" id="cond_outreach_yes">
+              <div class="form-group" style="margin-bottom:0; margin-top:0.5rem;">
+                <label class="form-label" for="inactive_member_outreach_frequency">How often do you do that?</label>
+                <input type="text" id="inactive_member_outreach_frequency" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Do you have Bright Spot Fridays in your Facebook group for members?</label>
+            <div class="option-list">
+              <label class="option-item">
+                <input type="radio" name="bright_spot_fridays" value="yes">
+                <label>Yes</label>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="bright_spot_fridays" value="no">
+                <label>No</label>
+              </label>
+            </div>
+          </div>
+
+          <div class="slide-error" id="error-8"></div>
+          <div class="slide-nav">
+            <button class="btn btn-back" onclick="goTo(7)">Back</button>
+            <button class="btn btn-primary" style="flex:1;" id="submitBtn" onclick="submitForm()">Submit</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Slide 9: Success ───────────────────────────────────────── -->
+      <section class="slide" id="slide-9">
+        <div class="slide-card" style="text-align:center; padding: var(--spacing-xl) var(--spacing-xl) calc(var(--spacing-xl) * 1.5);">
+          <div class="success-icon" style="margin: 0 auto var(--spacing-lg);">✓</div>
+          <div class="success-heading">Thanks! We've got what we need.</div>
+          <p class="success-body" id="successBody">We'll customize your content and email you when it's ready. Usually within 24 hours.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Supabase JS v2 via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ── Supabase config ──────────────────────────────────────────────────────
+    const SUPABASE_URL = 'https://ivrhseziuwqmlelezukk.supabase.co';
+    // Anon key is safe to expose client-side — RLS restricts it to INSERT on this one table.
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2cmhzZXppdXdxbWxlbGV6dWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MzM0MDQsImV4cCI6MjA1MjAwOTQwNH0.yUm13hwIef9Iz3bhT_lbMumi03yIpqnoMSuJKCza4Hc';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ── Slide state ──────────────────────────────────────────────────────────
+    const TOTAL_CONTENT_SLIDES = 7; // slides 2–8
+    let currentSlide = 1;
+
+    function updateProgress(slideNum) {
+      const progressWrap = document.getElementById('progressWrap');
+      if (slideNum <= 1 || slideNum >= 9) {
+        progressWrap.style.display = 'none';
+        return;
+      }
+      progressWrap.style.display = 'block';
+      const step = slideNum - 1; // slides 2–8 = steps 1–7
+      const pct = Math.round((step / TOTAL_CONTENT_SLIDES) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = 'Step ' + step + ' of ' + TOTAL_CONTENT_SLIDES;
+    }
+
+    function goTo(num) {
+      document.getElementById('slide-' + currentSlide).classList.remove('active');
+      document.getElementById('slide-' + num).classList.add('active');
+      currentSlide = num;
+      updateProgress(num);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showError(slideNum, msg) {
+      const el = document.getElementById('error-' + slideNum);
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+    function clearError(slideNum) {
+      const el = document.getElementById('error-' + slideNum);
+      if (el) { el.textContent = ''; el.classList.remove('visible'); }
+    }
+
+    // ── Validation + next ────────────────────────────────────────────────────
+    function nextSlide(fromSlide) {
+      clearError(fromSlide);
+
+      if (fromSlide === 2) {
+        const email = document.getElementById('email').value.trim();
+        const locId = document.getElementById('location_id').value.trim();
+        if (!email || !locId) {
+          showError(2, 'Both fields are required.');
+          return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showError(2, 'Please enter a valid email address.');
+          return;
+        }
+      }
+
+      if (fromSlide === 3) {
+        const required = ['age_range', 'gender_mix', 'daily_life', 'top_join_reasons', 'main_result_sentence'];
+        for (const id of required) {
+          if (!document.getElementById(id).value.trim()) {
+            showError(3, 'Please fill in all required fields.');
+            return;
+          }
+        }
+      }
+
+      if (fromSlide === 4) {
+        const picked = document.querySelector('input[name="main_service_type"]:checked');
+        if (!picked) {
+          showError(4, 'Please select your main training type.');
+          return;
+        }
+        if (!document.getElementById('training_style_description').value.trim()) {
+          showError(4, 'Please describe your training style.');
+          return;
+        }
+      }
+
+      if (fromSlide === 5) {
+        if (!document.getElementById('first_step_general_description').value.trim()) {
+          showError(5, 'Please describe how people join your gym.');
+          return;
+        }
+        const checked = document.querySelectorAll('input[name="first_step_offers"]:checked');
+        if (checked.length === 0) {
+          showError(5, 'Please select at least one first-step offer.');
+          return;
+        }
+        if (!document.getElementById('first_step_details').value.trim()) {
+          showError(5, 'Please describe the details of your offers.');
+          return;
+        }
+      }
+
+      if (fromSlide === 6) {
+        const picked = document.querySelector('input[name="goal_reviews_offered"]:checked');
+        if (!picked) {
+          showError(6, 'Please answer whether you offer Goal Reviews.');
+          return;
+        }
+      }
+
+      if (fromSlide === 7) {
+        const tones = document.querySelectorAll('input[name="brand_tone_pick"]:checked');
+        if (tones.length === 0) {
+          showError(7, 'Please select at least one tone.');
+          return;
+        }
+        if (!document.getElementById('core_values').value.trim()) {
+          showError(7, 'Please fill in your core values.');
+          return;
+        }
+      }
+
+      goTo(fromSlide + 1);
+    }
+
+    // ── Conditional reveals ──────────────────────────────────────────────────
+
+    // Slide 4: service type "Other"
+    document.querySelectorAll('input[name="main_service_type"]').forEach(el => {
+      el.addEventListener('change', () => {
+        const cond = document.getElementById('cond_service_other');
+        cond.classList.toggle('visible', el.value === 'Other' && el.checked);
+      });
+    });
+
+    // Slide 5: offers "Other"
+    document.getElementById('offers_other_check').addEventListener('change', function () {
+      document.getElementById('cond_offers_other').classList.toggle('visible', this.checked);
+    });
+
+    // Slide 6: goal reviews yes/no
+    document.getElementById('goal_reviews_yes').addEventListener('change', function () {
+      document.getElementById('cond_goal_reviews_yes').classList.add('visible');
+      document.getElementById('cond_goal_reviews_no').classList.remove('visible');
+    });
+    document.getElementById('goal_reviews_no').addEventListener('change', function () {
+      document.getElementById('cond_goal_reviews_no').classList.add('visible');
+      document.getElementById('cond_goal_reviews_yes').classList.remove('visible');
+    });
+
+    // Slide 7: brand tone max 2 + "Other" reveal
+    document.querySelectorAll('input[name="brand_tone_pick"]').forEach(el => {
+      el.addEventListener('change', () => {
+        const checked = document.querySelectorAll('input[name="brand_tone_pick"]:checked');
+        if (checked.length > 2) {
+          el.checked = false;
+          return;
+        }
+        const otherCheck = document.getElementById('brand_tone_other_check');
+        document.getElementById('cond_brand_tone_other').classList.toggle('visible', otherCheck.checked);
+      });
+    });
+
+    // Slide 8: inactive outreach yes/no
+    document.getElementById('outreach_yes').addEventListener('change', function () {
+      document.getElementById('cond_outreach_yes').classList.add('visible');
+    });
+    document.getElementById('outreach_no').addEventListener('change', function () {
+      document.getElementById('cond_outreach_yes').classList.remove('visible');
+    });
+
+    // ── Submit ───────────────────────────────────────────────────────────────
+    async function submitForm() {
+      clearError(8);
+
+      // Slide 8 required fields
+      if (!document.querySelector('input[name="nutrition_offered"]:checked')) {
+        showError(8, 'Please answer all required questions.');
+        return;
+      }
+      if (!document.querySelector('input[name="pt_offered"]:checked')) {
+        showError(8, 'Please answer all required questions.');
+        return;
+      }
+      if (!document.querySelector('input[name="inactive_member_outreach"]:checked')) {
+        showError(8, 'Please answer all required questions.');
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const email = document.getElementById('email').value.trim();
+      const location_id = document.getElementById('location_id').value.trim();
+
+      const first_step_offers = Array.from(
+        document.querySelectorAll('input[name="first_step_offers"]:checked')
+      ).map(el => el.value);
+
+      const brand_tone_pick = Array.from(
+        document.querySelectorAll('input[name="brand_tone_pick"]:checked')
+      ).map(el => el.value);
+
+      const submission_data = {
+        age_range:                      document.getElementById('age_range').value.trim(),
+        gender_mix:                     document.getElementById('gender_mix').value.trim(),
+        daily_life:                     document.getElementById('daily_life').value.trim(),
+        top_join_reasons:               document.getElementById('top_join_reasons').value.trim(),
+        main_result_sentence:           document.getElementById('main_result_sentence').value.trim(),
+        main_service_type:              (document.querySelector('input[name="main_service_type"]:checked') || {}).value || '',
+        main_service_type_other:        document.getElementById('main_service_type_other').value.trim(),
+        training_style_description:     document.getElementById('training_style_description').value.trim(),
+        first_step_general_description: document.getElementById('first_step_general_description').value.trim(),
+        first_step_offers,
+        first_step_offers_other:        document.getElementById('first_step_offers_other').value.trim(),
+        first_step_details:             document.getElementById('first_step_details').value.trim(),
+        goal_reviews_offered:           (document.querySelector('input[name="goal_reviews_offered"]:checked') || {}).value || '',
+        goal_reviews_name:              document.getElementById('goal_reviews_name').value.trim(),
+        goal_reviews_frequency:         document.getElementById('goal_reviews_frequency').value.trim(),
+        goal_reviews_alternative:       document.getElementById('goal_reviews_alternative').value.trim(),
+        brand_tone_pick,
+        brand_tone_other:               document.getElementById('brand_tone_other').value.trim(),
+        gym_tone_description:           document.getElementById('gym_tone_description').value.trim(),
+        core_values:                    document.getElementById('core_values').value.trim(),
+        banned_words:                   document.getElementById('banned_words').value.trim(),
+        nutrition_offered:              (document.querySelector('input[name="nutrition_offered"]:checked') || {}).value || '',
+        pt_offered:                     (document.querySelector('input[name="pt_offered"]:checked') || {}).value || '',
+        inactive_member_outreach:       (document.querySelector('input[name="inactive_member_outreach"]:checked') || {}).value || '',
+        inactive_member_outreach_frequency: document.getElementById('inactive_member_outreach_frequency').value.trim(),
+        bright_spot_fridays:            (document.querySelector('input[name="bright_spot_fridays"]:checked') || {}).value || '',
+      };
+
+      const { error } = await supabase
+        .from('content_customization_submissions')
+        .insert({ email, location_id, submission_data });
+
+      if (error) {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+        showError(8, 'Submission failed: ' + (error.message || 'Unknown error. Please try again.'));
+        return;
+      }
+
+      // Success
+      document.getElementById('successBody').textContent =
+        'We\'ll customize your content and email you at ' + email + ' when it\'s ready. Usually within 24 hours.';
+      goTo(9);
+    }
+  </script>
+</body>
+</html>
