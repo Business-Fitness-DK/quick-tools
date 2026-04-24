@@ -672,9 +672,8 @@
   <script>
     // ── Supabase config ──────────────────────────────────────────────────────
     const SUPABASE_URL = 'https://ivrhseziuwqmlelezukk.supabase.co';
-    // TODO: Replace with the actual anon key before deploying.
-    // The anon key is safe to expose client-side — RLS restricts it to INSERT only.
-    const SUPABASE_ANON_KEY = 'REPLACE_WITH_ANON_KEY';
+    // Anon key is safe to expose client-side — RLS restricts it to INSERT on this one table.
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2cmhzZXppdXdxbWxlbGV6dWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MzM0MDQsImV4cCI6MjA1MjAwOTQwNH0.yUm13hwIef9Iz3bhT_lbMumi03yIpqnoMSuJKCza4Hc';
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
