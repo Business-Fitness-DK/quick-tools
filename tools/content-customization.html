@@ -675,7 +675,16 @@
     // Anon key is safe to expose client-side — RLS restricts it to INSERT on this one table.
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2cmhzZXppdXdxbWxlbGV6dWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MzM0MDQsImV4cCI6MjA1MjAwOTQwNH0.yUm13hwIef9Iz3bhT_lbMumi03yIpqnoMSuJKCza4Hc';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Lazy init — if CDN hasn't loaded yet at script-eval time, top-level eager init
+    // throws and kills the rest of the script (including function bindings on window).
+    let _supabaseClient = null;
+    function getSupabaseClient() {
+      if (!_supabaseClient) {
+        if (!window.supabase) throw new Error('Supabase library failed to load. Check your network and try again.');
+        _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+      return _supabaseClient;
+    }
 
     // ── Slide state ──────────────────────────────────────────────────────────
     const TOTAL_CONTENT_SLIDES = 7; // slides 2–8
@@ -898,7 +907,7 @@
         bright_spot_fridays:            (document.querySelector('input[name="bright_spot_fridays"]:checked') || {}).value || '',
       };
 
-      const { error } = await supabase
+      const { error } = await getSupabaseClient()
         .from('content_customization_submissions')
         .insert({ email, location_id, submission_data });
 
@@ -914,6 +923,11 @@
         'We\'ll customize your content and email you at ' + email + ' when it\'s ready. Usually within 24 hours.';
       goTo(9);
     }
+
+    // Expose handlers used by inline onclick attributes.
+    window.goTo = goTo;
+    window.nextSlide = nextSlide;
+    window.submitForm = submitForm;
   </script>
 </body>
 </html>
