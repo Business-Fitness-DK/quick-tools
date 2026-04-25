@@ -160,11 +160,13 @@
       flex-shrink: 0;
       cursor: pointer;
     }
-    .option-item label {
+    .option-item span {
+      flex: 1;
       cursor: pointer;
       font-size: 0.9375rem;
       color: var(--text-primary);
       line-height: 1.4;
+      user-select: none;
     }
 
     /* Conditional reveal */
@@ -344,43 +346,43 @@
             <div class="option-list" id="service_type_list">
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="CrossFit (licensed)">
-                <label>CrossFit (licensed)</label>
+                <span>CrossFit (licensed)</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Functional fitness (non-CrossFit)">
-                <label>Functional fitness (non-CrossFit)</label>
+                <span>Functional fitness (non-CrossFit)</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="General fitness classes (non-CrossFit)">
-                <label>General fitness classes (non-CrossFit)</label>
+                <span>General fitness classes (non-CrossFit)</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Strength & conditioning">
-                <label>Strength &amp; conditioning</label>
+                <span>Strength &amp; conditioning</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="HYROX training">
-                <label>HYROX training</label>
+                <span>HYROX training</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Bootcamp">
-                <label>Bootcamp</label>
+                <span>Bootcamp</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Yoga / Pilates">
-                <label>Yoga / Pilates</label>
+                <span>Yoga / Pilates</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Personal training / semi-private (as main service)">
-                <label>Personal training / semi-private (as main service)</label>
+                <span>Personal training / semi-private (as main service)</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Nutrition coaching (as main service)">
-                <label>Nutrition coaching (as main service)</label>
+                <span>Nutrition coaching (as main service)</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="main_service_type" value="Other">
-                <label>Other (please describe below)</label>
+                <span>Other (please describe below)</span>
               </label>
             </div>
             <div class="conditional" id="cond_service_other">
@@ -421,35 +423,35 @@
             <div class="option-list">
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Free Intro / No Sweat Intro / First Step Intro">
-                <label>Free Intro / No Sweat Intro / First Step Intro</label>
+                <span>Free Intro / No Sweat Intro / First Step Intro</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Free trial class">
-                <label>Free trial class</label>
+                <span>Free trial class</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Free week / 7-day pass">
-                <label>Free week / 7-day pass</label>
+                <span>Free week / 7-day pass</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Introduction program (free, multi-session)">
-                <label>Introduction program (free, multi-session)</label>
+                <span>Introduction program (free, multi-session)</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Introduction program (paid, multi-session)">
-                <label>Introduction program (paid, multi-session)</label>
+                <span>Introduction program (paid, multi-session)</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Direct to membership">
-                <label>Direct to membership</label>
+                <span>Direct to membership</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="PT consult">
-                <label>PT consult</label>
+                <span>PT consult</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="first_step_offers" value="Other" id="offers_other_check">
-                <label>Other</label>
+                <span>Other</span>
               </label>
             </div>
             <div class="conditional" id="cond_offers_other">
@@ -483,11 +485,11 @@
             <div class="option-list">
               <label class="option-item">
                 <input type="radio" name="goal_reviews_offered" value="yes" id="goal_reviews_yes">
-                <label>Yes</label>
+                <span>Yes</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="goal_reviews_offered" value="no" id="goal_reviews_no">
-                <label>No</label>
+                <span>No</span>
               </label>
             </div>
           </div>
@@ -528,23 +530,23 @@
             <div class="option-list" id="brand_tone_list">
               <label class="option-item">
                 <input type="checkbox" name="brand_tone_pick" value="Friendly community coach">
-                <label>Friendly community coach</label>
+                <span>Friendly community coach</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="brand_tone_pick" value="Direct and performance-driven">
-                <label>Direct and performance-driven</label>
+                <span>Direct and performance-driven</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="brand_tone_pick" value="Calm and wellness-focused">
-                <label>Calm and wellness-focused</label>
+                <span>Calm and wellness-focused</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="brand_tone_pick" value="Professional / clinical">
-                <label>Professional / clinical</label>
+                <span>Professional / clinical</span>
               </label>
               <label class="option-item">
                 <input type="checkbox" name="brand_tone_pick" value="Other" id="brand_tone_other_check">
-                <label>Other (please describe)</label>
+                <span>Other (please describe)</span>
               </label>
             </div>
             <div class="conditional" id="cond_brand_tone_other">
@@ -590,11 +592,11 @@
             <div class="option-list">
               <label class="option-item">
                 <input type="radio" name="nutrition_offered" value="yes">
-                <label>Yes</label>
+                <span>Yes</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="nutrition_offered" value="no">
-                <label>No</label>
+                <span>No</span>
               </label>
             </div>
           </div>
@@ -604,11 +606,11 @@
             <div class="option-list">
               <label class="option-item">
                 <input type="radio" name="pt_offered" value="yes">
-                <label>Yes</label>
+                <span>Yes</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="pt_offered" value="no">
-                <label>No</label>
+                <span>No</span>
               </label>
             </div>
           </div>
@@ -618,11 +620,11 @@
             <div class="option-list">
               <label class="option-item">
                 <input type="radio" name="inactive_member_outreach" value="yes" id="outreach_yes">
-                <label>Yes</label>
+                <span>Yes</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="inactive_member_outreach" value="no" id="outreach_no">
-                <label>No</label>
+                <span>No</span>
               </label>
             </div>
             <div class="conditional" id="cond_outreach_yes">
@@ -638,11 +640,11 @@
             <div class="option-list">
               <label class="option-item">
                 <input type="radio" name="bright_spot_fridays" value="yes">
-                <label>Yes</label>
+                <span>Yes</span>
               </label>
               <label class="option-item">
                 <input type="radio" name="bright_spot_fridays" value="no">
-                <label>No</label>
+                <span>No</span>
               </label>
             </div>
           </div>
