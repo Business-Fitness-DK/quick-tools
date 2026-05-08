@@ -492,16 +492,16 @@
     };
 
     const fields = [
-      { id: "adSpend", min: 5000, max: 300000, step: 1000, value: 60000, type: "currency" },
-      { id: "cpl", min: 20, max: 1000, step: 10, value: 160, type: "currency" },
-      { id: "cpApt", min: 250, max: 6000, step: 50, value: 1200, type: "currency" },
-      { id: "showRate", min: 30, max: 100, step: 1, value: 75, type: "percent" },
-      { id: "closeRate", min: 10, max: 90, step: 1, value: 35, type: "percent" },
-      { id: "manualSales", min: 1, max: 200, step: 1, value: 14, type: "number" },
-      { id: "frontRevenue", min: 1000, max: 50000, step: 500, value: 18000, type: "currency" },
+      { id: "adSpend", min: 0, max: 300000, step: 1000, value: 60000, type: "currency" },
+      { id: "cpl", min: 0, max: 1000, step: 10, value: 160, type: "currency" },
+      { id: "cpApt", min: 0, max: 6000, step: 50, value: 1200, type: "currency" },
+      { id: "showRate", min: 0, max: 100, step: 1, value: 75, type: "percent" },
+      { id: "closeRate", min: 0, max: 100, step: 1, value: 35, type: "percent" },
+      { id: "manualSales", min: 0, max: 200, step: 1, value: 14, type: "number" },
+      { id: "frontRevenue", min: 0, max: 50000, step: 500, value: 18000, type: "currency" },
       { id: "membershipRevenue", min: 0, max: 5000, step: 100, value: 950, type: "currency" },
       { id: "membershipAttach", min: 0, max: 100, step: 1, value: 55, type: "percent" },
-      { id: "retentionMonths", min: 1, max: 36, step: 1, value: 10, type: "months" }
+      { id: "retentionMonths", min: 0, max: 36, step: 1, value: 10, type: "months" }
     ];
 
     let language = "en";
@@ -521,10 +521,7 @@
     }
 
     function currentValues() {
-      return Object.fromEntries(fields.map((field) => {
-        const input = document.querySelector(`[data-input="${field.id}"]`);
-        return [field.id, input ? Number(input.value) : field.value];
-      }));
+      return Object.fromEntries(fields.map((field) => [field.id, field.value]));
     }
 
     function renderInputs() {
@@ -553,7 +550,7 @@
             <span class="metric-help">${help}</span>
             <span class="metric-control">
               <input type="range" min="${field.min}" max="${field.max}" step="${field.step}" value="${field.value}" data-input="${field.id}">
-              <input class="number-input" type="number" min="${field.min}" max="${field.max}" step="${field.step}" value="${field.value}" data-number="${field.id}">
+              <input class="number-input" type="number" min="${field.min}" step="${field.step}" value="${field.value}" data-number="${field.id}">
             </span>
           </label>
         `;
@@ -577,9 +574,11 @@
     }
 
     function syncField(field, rawValue) {
-      const value = Math.max(field.min, Math.min(field.max, Number(rawValue) || 0));
+      const value = Math.max(field.min, Number(rawValue) || 0);
       field.value = value;
-      document.querySelector(`[data-input="${field.id}"]`).value = value;
+      const range = document.querySelector(`[data-input="${field.id}"]`);
+      range.max = Math.max(field.max, value);
+      range.value = value;
       document.querySelector(`[data-number="${field.id}"]`).value = value;
       document.querySelector(`[data-value="${field.id}"]`).textContent = formatFieldValue(field, value);
       calculate();
@@ -587,8 +586,8 @@
 
     function calculate() {
       const values = currentValues();
-      const leads = values.adSpend / values.cpl;
-      const appointments = values.adSpend / values.cpApt;
+      const leads = values.cpl > 0 ? values.adSpend / values.cpl : 0;
+      const appointments = values.cpApt > 0 ? values.adSpend / values.cpApt : 0;
       const sales = salesMode === "manual"
         ? values.manualSales
         : appointments * (values.showRate / 100) * (values.closeRate / 100);
