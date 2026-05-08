@@ -106,6 +106,53 @@
       gap: 0.35rem;
     }
 
+    .mode-switch {
+      background: var(--roi-wash);
+      border: 1px solid rgba(52, 118, 91, 0.18);
+      border-radius: var(--radius-lg);
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.9rem;
+    }
+
+    .mode-title {
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .mode-copy {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      margin: -0.45rem 0 0;
+    }
+
+    .mode-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .mode-buttons button {
+      border: 0;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.65rem 0.55rem;
+    }
+
+    .mode-buttons button.active {
+      background: var(--roi-green-dark);
+      color: #fff;
+    }
+
     .metric-label-row {
       align-items: baseline;
       display: flex;
@@ -377,7 +424,7 @@
         roasLabel: "Day-30 ROAS",
         roasNote: "Front-end plus first month membership revenue divided by ad spend.",
         salesLabel: "New sales",
-        salesNote: "Expected clients sold from booked appointments and close rate.",
+        salesNote: "Expected clients sold from conversion rates or your manual sales target.",
         month12Label: "Month 12 revenue",
         month12Note: "Front-end revenue plus active recurring memberships in month 12.",
         profitLabel: "12-month profit",
@@ -386,12 +433,18 @@
         chartCopy: "Assumes the same marketing spend and conversion rates each month.",
         month: "Month",
         formula: "Formula: Leads = ad spend / CPL. Appointments = ad spend / CPApt. Sales = appointments x show rate x close rate. Day-30 ROAS = first month revenue / ad spend.",
+        salesModeTitle: "Sales input mode",
+        salesModeCopy: "Use close rate when you want the funnel to calculate sales. Use manual sales when you already know the target.",
+        salesModeAuto: "Close rate",
+        salesModeManual: "Sales count",
+        formulaManual: "Formula: Leads = ad spend / CPL. Appointments = ad spend / CPApt. Sales = manual sales count. Day-30 ROAS = first month revenue / ad spend.",
         fields: {
           adSpend: ["Monthly ad spend", "The amount invested in paid marketing each month. This is the main volume lever."],
           cpl: ["CPL", "Cost per lead. Useful for seeing lead volume, even though sales are forecast from CPApt."],
           cpApt: ["CPApt", "Cost per appointment booked. This often moves ROAS more than CPL because appointments are closer to revenue."],
           showRate: ["Show rate", "The share of booked appointments that actually show up. Better reminders and speed to lead lift this."],
           closeRate: ["Close rate", "The share of shown appointments that become paying clients. Sales process quality lives here."],
+          manualSales: ["Sales count", "Use this when you want to forecast from a fixed number of sales instead of a close rate."],
           frontRevenue: ["Front-end revenue per sale", "The upfront program revenue when a client joins. This drives day-30 ROAS directly."],
           membershipRevenue: ["Monthly membership revenue", "Recurring revenue per client after the first sale. This is what makes the forecast compound."],
           membershipAttach: ["Membership attach rate", "The share of new clients who continue into membership after the front-end program."],
@@ -409,7 +462,7 @@
         roasLabel: "Dag 30 ROAS",
         roasNote: "Front-end plus første måneds membership revenue divideret med ad spend.",
         salesLabel: "Nye salg",
-        salesNote: "Forventede salg ud fra bookede appointments, show rate og close rate.",
+        salesNote: "Forventede salg ud fra conversion rates eller dit manuelle salgsmål.",
         month12Label: "Måned 12 omsætning",
         month12Note: "Front-end revenue plus aktive memberships i måned 12.",
         profitLabel: "12 måneders profit",
@@ -418,12 +471,18 @@
         chartCopy: "Antager samme marketing spend og conversion rates hver måned.",
         month: "Måned",
         formula: "Formel: Leads = ad spend / CPL. Appointments = ad spend / CPApt. Sales = appointments x show rate x close rate. Dag 30 ROAS = første måneds omsætning / ad spend.",
+        salesModeTitle: "Hvordan skal salg beregnes?",
+        salesModeCopy: "Brug close rate når funnel’en skal regne salget ud. Brug antal salg når du allerede kender målet.",
+        salesModeAuto: "Close rate",
+        salesModeManual: "Antal salg",
+        formulaManual: "Formel: Leads = ad spend / CPL. Appointments = ad spend / CPApt. Sales = manuelt antal salg. Dag 30 ROAS = første måneds omsætning / ad spend.",
         fields: {
           adSpend: ["Ad spend pr. måned", "Det beløb der investeres i betalt marketing hver måned. Det er den største volumen-knap."],
           cpl: ["CPL", "Cost per lead. Bruges til at forstå lead volume, selvom salget forecastes fra CPApt."],
           cpApt: ["CPApt", "Cost per appointment booked. Den ændrer ofte ROAS mere end CPL, fordi appointments ligger tættere på omsætning."],
           showRate: ["Show rate", "Andelen af bookede appointments der faktisk møder op. Bedre reminders og speed to lead løfter den."],
           closeRate: ["Close rate", "Andelen af fremmødte appointments der bliver kunder. Her ligger effekten af salgsprocessen."],
+          manualSales: ["Antal salg", "Brug den her når du vil forecaste ud fra et fast antal salg i stedet for close rate."],
           frontRevenue: ["Front-end revenue pr. salg", "Den upfront programomsætning kunden betaler ved køb. Den driver dag 30 ROAS direkte."],
           membershipRevenue: ["Membership revenue pr. måned", "Løbende omsætning pr. kunde efter front-end programmet. Det er her forecastet begynder at compounding."],
           membershipAttach: ["Membership attach rate", "Andelen af nye kunder der fortsætter ind i membership efter front-end programmet."],
@@ -438,6 +497,7 @@
       { id: "cpApt", min: 250, max: 6000, step: 50, value: 1200, type: "currency" },
       { id: "showRate", min: 30, max: 100, step: 1, value: 75, type: "percent" },
       { id: "closeRate", min: 10, max: 90, step: 1, value: 35, type: "percent" },
+      { id: "manualSales", min: 1, max: 200, step: 1, value: 14, type: "number" },
       { id: "frontRevenue", min: 1000, max: 50000, step: 500, value: 18000, type: "currency" },
       { id: "membershipRevenue", min: 0, max: 5000, step: 100, value: 950, type: "currency" },
       { id: "membershipAttach", min: 0, max: 100, step: 1, value: 55, type: "percent" },
@@ -445,6 +505,7 @@
     ];
 
     let language = "en";
+    let salesMode = "auto";
 
     const currency = new Intl.NumberFormat("da-DK", {
       style: "currency",
@@ -455,19 +516,33 @@
     function formatFieldValue(field, value) {
       if (field.type === "percent") return `${value}%`;
       if (field.type === "months") return language === "da" ? `${value} mdr.` : `${value} mo.`;
+      if (field.type === "number") return value.toString();
       return currency.format(value);
     }
 
     function currentValues() {
       return Object.fromEntries(fields.map((field) => {
         const input = document.querySelector(`[data-input="${field.id}"]`);
-        return [field.id, Number(input.value)];
+        return [field.id, input ? Number(input.value) : field.value];
       }));
     }
 
     function renderInputs() {
       const container = document.getElementById("inputs");
-      container.innerHTML = fields.map((field) => {
+      container.innerHTML = `
+        <div class="mode-switch">
+          <div class="mode-title">${copy[language].salesModeTitle}</div>
+          <p class="mode-copy">${copy[language].salesModeCopy}</p>
+          <div class="mode-buttons" aria-label="${copy[language].salesModeTitle}">
+            <button type="button" class="${salesMode === "auto" ? "active" : ""}" data-sales-mode="auto">${copy[language].salesModeAuto}</button>
+            <button type="button" class="${salesMode === "manual" ? "active" : ""}" data-sales-mode="manual">${copy[language].salesModeManual}</button>
+          </div>
+        </div>
+      ` + fields.filter((field) => {
+        if (field.id === "closeRate") return salesMode === "auto";
+        if (field.id === "manualSales") return salesMode === "manual";
+        return true;
+      }).map((field) => {
         const [label, help] = copy[language].fields[field.id];
         return `
           <label class="metric-field">
@@ -484,9 +559,18 @@
         `;
       }).join("");
 
+      document.querySelectorAll("[data-sales-mode]").forEach((button) => {
+        button.addEventListener("click", () => {
+          salesMode = button.dataset.salesMode;
+          renderInputs();
+          calculate();
+        });
+      });
+
       fields.forEach((field) => {
         const range = document.querySelector(`[data-input="${field.id}"]`);
         const number = document.querySelector(`[data-number="${field.id}"]`);
+        if (!range || !number) return;
         range.addEventListener("input", () => syncField(field, range.value));
         number.addEventListener("input", () => syncField(field, number.value));
       });
@@ -505,7 +589,9 @@
       const values = currentValues();
       const leads = values.adSpend / values.cpl;
       const appointments = values.adSpend / values.cpApt;
-      const sales = appointments * (values.showRate / 100) * (values.closeRate / 100);
+      const sales = salesMode === "manual"
+        ? values.manualSales
+        : appointments * (values.showRate / 100) * (values.closeRate / 100);
       const memberships = sales * (values.membershipAttach / 100);
       const frontRevenue = sales * values.frontRevenue;
       const monthOneMembership = memberships * values.membershipRevenue;
@@ -532,7 +618,8 @@
       document.getElementById("sales").textContent = sales.toFixed(1);
       document.getElementById("month12Revenue").textContent = currency.format(months[11].revenue);
       document.getElementById("profit12").textContent = currency.format(totalProfit);
-      document.getElementById("formula").textContent = `${copy[language].formula} ${language === "da" ? "Estimerede leads" : "Estimated leads"}: ${Math.round(leads)}.`;
+      const formulaText = salesMode === "manual" ? copy[language].formulaManual : copy[language].formula;
+      document.getElementById("formula").textContent = `${formulaText} ${language === "da" ? "Estimerede leads" : "Estimated leads"}: ${Math.round(leads)}.`;
 
       renderChart(months);
     }
