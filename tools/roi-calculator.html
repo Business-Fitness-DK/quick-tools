@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing ROI Calculator</title>
+  <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+  <link rel="stylesheet" href="../assets/css/brand.css">
+  <style>
+    :root {
+      --roi-green: #34765b;
+      --roi-green-dark: #265843;
+      --roi-ink: #172033;
+      --roi-gold: #c4862f;
+      --roi-wash: #f1f4ef;
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb {
+      display: inline-flex;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      text-decoration: none;
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb:hover {
+      color: var(--text-primary);
+    }
+
+    .language-toggle {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .language-toggle button {
+      border: 0;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      min-width: 78px;
+      padding: 0.6rem 0.85rem;
+    }
+
+    .language-toggle button.active {
+      background: var(--roi-ink);
+      color: #fff;
+    }
+
+    .calculator-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.92fr) minmax(320px, 1.08fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-subtle);
+    }
+
+    .panel-header {
+      border-bottom: 1px solid var(--border-light);
+      padding: 1rem 1.1rem;
+    }
+
+    .panel-title {
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+    }
+
+    .panel-copy {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .input-list {
+      display: grid;
+      gap: 0.8rem;
+      padding: 1rem 1.1rem 1.1rem;
+    }
+
+    .metric-field {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .metric-label-row {
+      align-items: baseline;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .metric-label {
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      color: var(--roi-green-dark);
+      font-size: 0.85rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .metric-help {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      min-height: 2.25em;
+    }
+
+    .metric-control {
+      display: grid;
+      grid-template-columns: 1fr 94px;
+      gap: 0.7rem;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      accent-color: var(--roi-green);
+      width: 100%;
+    }
+
+    .number-input {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 0.9rem;
+      min-width: 0;
+      padding: 0.55rem 0.65rem;
+      text-align: right;
+      width: 100%;
+    }
+
+    .number-input:focus {
+      border-color: var(--roi-ink);
+      outline: none;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      padding: 1rem 1.1rem 0;
+    }
+
+    .result-tile {
+      background: var(--background);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      min-height: 112px;
+      padding: 0.9rem;
+    }
+
+    .result-label {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 0.4rem;
+    }
+
+    .result-value {
+      color: var(--roi-ink);
+      font-size: clamp(1.45rem, 2.7vw, 2.1rem);
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+
+    .result-note {
+      color: var(--text-tertiary);
+      font-size: 0.75rem;
+      line-height: 1.35;
+      margin-top: 0.45rem;
+    }
+
+    .highlight {
+      background: var(--roi-wash);
+      border-color: rgba(52, 118, 91, 0.22);
+    }
+
+    .highlight .result-value {
+      color: var(--roi-green-dark);
+    }
+
+    .chart-wrap {
+      padding: 1rem 1.1rem;
+    }
+
+    .chart {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.85rem;
+    }
+
+    .chart-row {
+      align-items: center;
+      display: grid;
+      grid-template-columns: 50px 1fr 92px;
+      gap: 0.65rem;
+    }
+
+    .month-label,
+    .month-value {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .month-value {
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .bar-track {
+      background: var(--border-light);
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      background: linear-gradient(90deg, var(--roi-green), var(--roi-gold));
+      border-radius: inherit;
+      display: block;
+      height: 100%;
+      min-width: 3px;
+    }
+
+    .formula {
+      background: var(--background);
+      border-top: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      line-height: 1.55;
+      padding: 0.9rem 1.1rem;
+    }
+
+    @media (max-width: 860px) {
+      .calculator-layout,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tool-header {
+        display: grid;
+      }
+
+      .language-toggle {
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .metric-control,
+      .chart-row {
+        grid-template-columns: 1fr;
+      }
+
+      .month-value {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="/" class="logo">
+        <img src="../assets/images/logo.png" alt="Logo">
+        <span class="logo-text">Quick Tools from Business & Fitness</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <a href="/" class="breadcrumb" data-i18n="back">Back to tools</a>
+
+    <div class="tool-header">
+      <div>
+        <h1 class="page-title" data-i18n="title">Marketing ROI Calculator</h1>
+        <p class="page-subtitle" data-i18n="subtitle">Adjust the core growth levers and see how day-30 ROAS and monthly revenue change.</p>
+      </div>
+      <div class="language-toggle" aria-label="Language">
+        <button type="button" class="active" data-lang-button="en">English</button>
+        <button type="button" data-lang-button="da">Dansk</button>
+      </div>
+    </div>
+
+    <section class="calculator-layout">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title" data-i18n="inputsTitle">Growth levers</h2>
+          <p class="panel-copy" data-i18n="inputsCopy">Use rough numbers. The goal is to understand which metric moves the future most.</p>
+        </div>
+        <div class="input-list" id="inputs"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title" data-i18n="forecastTitle">Forecast</h2>
+          <p class="panel-copy" data-i18n="forecastCopy">Revenue includes front-end sales now plus recurring membership revenue over time.</p>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-tile highlight">
+            <div class="result-label" data-i18n="roasLabel">Day-30 ROAS</div>
+            <div class="result-value" id="day30Roas">0.00x</div>
+            <div class="result-note" data-i18n="roasNote">Front-end plus first month membership revenue divided by ad spend.</div>
+          </div>
+          <div class="result-tile">
+            <div class="result-label" data-i18n="salesLabel">New sales</div>
+            <div class="result-value" id="sales">0</div>
+            <div class="result-note" data-i18n="salesNote">Expected clients sold from booked appointments and close rate.</div>
+          </div>
+          <div class="result-tile">
+            <div class="result-label" data-i18n="month12Label">Month 12 revenue</div>
+            <div class="result-value" id="month12Revenue">0 kr.</div>
+            <div class="result-note" data-i18n="month12Note">Front-end revenue plus active recurring memberships in month 12.</div>
+          </div>
+          <div class="result-tile">
+            <div class="result-label" data-i18n="profitLabel">12-month profit</div>
+            <div class="result-value" id="profit12">0 kr.</div>
+            <div class="result-note" data-i18n="profitNote">Total 12-month revenue minus 12 months of ad spend.</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <h2 class="panel-title" data-i18n="chartTitle">Month by month</h2>
+          <p class="panel-copy" data-i18n="chartCopy">Assumes the same marketing spend and conversion rates each month.</p>
+          <div class="chart" id="chart"></div>
+        </div>
+
+        <div class="formula" id="formula"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const copy = {
+      en: {
+        back: "Back to tools",
+        title: "Marketing ROI Calculator",
+        subtitle: "Adjust the core growth levers and see how day-30 ROAS and monthly revenue change.",
+        inputsTitle: "Growth levers",
+        inputsCopy: "Use rough numbers. The goal is to understand which metric moves the future most.",
+        forecastTitle: "Forecast",
+        forecastCopy: "Revenue includes front-end sales now plus recurring membership revenue over time.",
+        roasLabel: "Day-30 ROAS",
+        roasNote: "Front-end plus first month membership revenue divided by ad spend.",
+        salesLabel: "New sales",
+        salesNote: "Expected clients sold from booked appointments and close rate.",
+        month12Label: "Month 12 revenue",
+        month12Note: "Front-end revenue plus active recurring memberships in month 12.",
+        profitLabel: "12-month profit",
+        profitNote: "Total 12-month revenue minus 12 months of ad spend.",
+        chartTitle: "Month by month",
+        chartCopy: "Assumes the same marketing spend and conversion rates each month.",
+        month: "Month",
+        formula: "Formula: Leads = ad spend / CPL. Appointments = ad spend / CPApt. Sales = appointments x show rate x close rate. Day-30 ROAS = first month revenue / ad spend.",
+        fields: {
+          adSpend: ["Monthly ad spend", "The amount invested in paid marketing each month. This is the main volume lever."],
+          cpl: ["CPL", "Cost per lead. Useful for seeing lead volume, even though sales are forecast from CPApt."],
+          cpApt: ["CPApt", "Cost per appointment booked. This often moves ROAS more than CPL because appointments are closer to revenue."],
+          showRate: ["Show rate", "The share of booked appointments that actually show up. Better reminders and speed to lead lift this."],
+          closeRate: ["Close rate", "The share of shown appointments that become paying clients. Sales process quality lives here."],
+          frontRevenue: ["Front-end revenue per sale", "The upfront program revenue when a client joins. This drives day-30 ROAS directly."],
+          membershipRevenue: ["Monthly membership revenue", "Recurring revenue per client after the first sale. This is what makes the forecast compound."],
+          membershipAttach: ["Membership attach rate", "The share of new clients who continue into membership after the front-end program."],
+          retentionMonths: ["Average membership retention", "How many months an attached member stays active on average. Longer retention increases later-month revenue."]
+        }
+      },
+      da: {
+        back: "Tilbage til tools",
+        title: "Marketing ROI-beregner",
+        subtitle: "Ryk på de vigtigste vækst-tal og se, hvordan dag 30 ROAS og månedlig omsætning ændrer sig.",
+        inputsTitle: "Tal du kan skrue på",
+        inputsCopy: "Brug grove tal. Målet er at se, hvilke metrics der ændrer fremtiden mest.",
+        forecastTitle: "Forecast",
+        forecastCopy: "Omsætning inkluderer front-end salg nu plus løbende membership revenue over tid.",
+        roasLabel: "Dag 30 ROAS",
+        roasNote: "Front-end plus første måneds membership revenue divideret med ad spend.",
+        salesLabel: "Nye salg",
+        salesNote: "Forventede salg ud fra bookede appointments, show rate og close rate.",
+        month12Label: "Måned 12 omsætning",
+        month12Note: "Front-end revenue plus aktive memberships i måned 12.",
+        profitLabel: "12 måneders profit",
+        profitNote: "Samlet 12 måneders omsætning minus 12 måneders ad spend.",
+        chartTitle: "Måned for måned",
+        chartCopy: "Antager samme marketing spend og conversion rates hver måned.",
+        month: "Måned",
+        formula: "Formel: Leads = ad spend / CPL. Appointments = ad spend / CPApt. Sales = appointments x show rate x close rate. Dag 30 ROAS = første måneds omsætning / ad spend.",
+        fields: {
+          adSpend: ["Ad spend pr. måned", "Det beløb der investeres i betalt marketing hver måned. Det er den største volumen-knap."],
+          cpl: ["CPL", "Cost per lead. Bruges til at forstå lead volume, selvom salget forecastes fra CPApt."],
+          cpApt: ["CPApt", "Cost per appointment booked. Den ændrer ofte ROAS mere end CPL, fordi appointments ligger tættere på omsætning."],
+          showRate: ["Show rate", "Andelen af bookede appointments der faktisk møder op. Bedre reminders og speed to lead løfter den."],
+          closeRate: ["Close rate", "Andelen af fremmødte appointments der bliver kunder. Her ligger effekten af salgsprocessen."],
+          frontRevenue: ["Front-end revenue pr. salg", "Den upfront programomsætning kunden betaler ved køb. Den driver dag 30 ROAS direkte."],
+          membershipRevenue: ["Membership revenue pr. måned", "Løbende omsætning pr. kunde efter front-end programmet. Det er her forecastet begynder at compounding."],
+          membershipAttach: ["Membership attach rate", "Andelen af nye kunder der fortsætter ind i membership efter front-end programmet."],
+          retentionMonths: ["Gennemsnitlig membership retention", "Hvor mange måneder et member bliver aktiv i gennemsnit. Længere retention løfter de senere måneder."]
+        }
+      }
+    };
+
+    const fields = [
+      { id: "adSpend", min: 5000, max: 300000, step: 1000, value: 60000, type: "currency" },
+      { id: "cpl", min: 20, max: 1000, step: 10, value: 160, type: "currency" },
+      { id: "cpApt", min: 250, max: 6000, step: 50, value: 1200, type: "currency" },
+      { id: "showRate", min: 30, max: 100, step: 1, value: 75, type: "percent" },
+      { id: "closeRate", min: 10, max: 90, step: 1, value: 35, type: "percent" },
+      { id: "frontRevenue", min: 1000, max: 50000, step: 500, value: 18000, type: "currency" },
+      { id: "membershipRevenue", min: 0, max: 5000, step: 100, value: 950, type: "currency" },
+      { id: "membershipAttach", min: 0, max: 100, step: 1, value: 55, type: "percent" },
+      { id: "retentionMonths", min: 1, max: 36, step: 1, value: 10, type: "months" }
+    ];
+
+    let language = "en";
+
+    const currency = new Intl.NumberFormat("da-DK", {
+      style: "currency",
+      currency: "DKK",
+      maximumFractionDigits: 0
+    });
+
+    function formatFieldValue(field, value) {
+      if (field.type === "percent") return `${value}%`;
+      if (field.type === "months") return language === "da" ? `${value} mdr.` : `${value} mo.`;
+      return currency.format(value);
+    }
+
+    function currentValues() {
+      return Object.fromEntries(fields.map((field) => {
+        const input = document.querySelector(`[data-input="${field.id}"]`);
+        return [field.id, Number(input.value)];
+      }));
+    }
+
+    function renderInputs() {
+      const container = document.getElementById("inputs");
+      container.innerHTML = fields.map((field) => {
+        const [label, help] = copy[language].fields[field.id];
+        return `
+          <label class="metric-field">
+            <div class="metric-label-row">
+              <span class="metric-label">${label}</span>
+              <span class="metric-value" data-value="${field.id}">${formatFieldValue(field, field.value)}</span>
+            </div>
+            <span class="metric-help">${help}</span>
+            <span class="metric-control">
+              <input type="range" min="${field.min}" max="${field.max}" step="${field.step}" value="${field.value}" data-input="${field.id}">
+              <input class="number-input" type="number" min="${field.min}" max="${field.max}" step="${field.step}" value="${field.value}" data-number="${field.id}">
+            </span>
+          </label>
+        `;
+      }).join("");
+
+      fields.forEach((field) => {
+        const range = document.querySelector(`[data-input="${field.id}"]`);
+        const number = document.querySelector(`[data-number="${field.id}"]`);
+        range.addEventListener("input", () => syncField(field, range.value));
+        number.addEventListener("input", () => syncField(field, number.value));
+      });
+    }
+
+    function syncField(field, rawValue) {
+      const value = Math.max(field.min, Math.min(field.max, Number(rawValue) || 0));
+      field.value = value;
+      document.querySelector(`[data-input="${field.id}"]`).value = value;
+      document.querySelector(`[data-number="${field.id}"]`).value = value;
+      document.querySelector(`[data-value="${field.id}"]`).textContent = formatFieldValue(field, value);
+      calculate();
+    }
+
+    function calculate() {
+      const values = currentValues();
+      const leads = values.adSpend / values.cpl;
+      const appointments = values.adSpend / values.cpApt;
+      const sales = appointments * (values.showRate / 100) * (values.closeRate / 100);
+      const memberships = sales * (values.membershipAttach / 100);
+      const frontRevenue = sales * values.frontRevenue;
+      const monthOneMembership = memberships * values.membershipRevenue;
+      const day30Revenue = frontRevenue + monthOneMembership;
+      const day30Roas = values.adSpend > 0 ? day30Revenue / values.adSpend : 0;
+      const retention = Math.max(1, values.retentionMonths);
+      const months = Array.from({ length: 12 }, (_, index) => {
+        const month = index + 1;
+        let activeMemberships = 0;
+        for (let cohort = 1; cohort <= month; cohort += 1) {
+          const age = month - cohort;
+          activeMemberships += memberships * Math.max(0, 1 - age / retention);
+        }
+        const revenue = frontRevenue + activeMemberships * values.membershipRevenue;
+        return {
+          month,
+          revenue,
+          profit: revenue - values.adSpend
+        };
+      });
+      const totalProfit = months.reduce((sum, item) => sum + item.profit, 0);
+
+      document.getElementById("day30Roas").textContent = `${day30Roas.toFixed(2)}x`;
+      document.getElementById("sales").textContent = sales.toFixed(1);
+      document.getElementById("month12Revenue").textContent = currency.format(months[11].revenue);
+      document.getElementById("profit12").textContent = currency.format(totalProfit);
+      document.getElementById("formula").textContent = `${copy[language].formula} ${language === "da" ? "Estimerede leads" : "Estimated leads"}: ${Math.round(leads)}.`;
+
+      renderChart(months);
+    }
+
+    function renderChart(months) {
+      const maxRevenue = Math.max(...months.map((item) => item.revenue), 1);
+      document.getElementById("chart").innerHTML = months.map((item) => `
+        <div class="chart-row">
+          <div class="month-label">${copy[language].month} ${item.month}</div>
+          <div class="bar-track"><span class="bar-fill" style="width: ${(item.revenue / maxRevenue) * 100}%"></span></div>
+          <div class="month-value">${currency.format(item.revenue)}</div>
+        </div>
+      `).join("");
+    }
+
+    function setLanguage(nextLanguage) {
+      language = nextLanguage;
+      document.documentElement.lang = nextLanguage;
+      document.querySelectorAll("[data-i18n]").forEach((element) => {
+        element.textContent = copy[language][element.dataset.i18n];
+      });
+      document.querySelectorAll("[data-lang-button]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.langButton === language);
+      });
+      renderInputs();
+      calculate();
+    }
+
+    document.querySelectorAll("[data-lang-button]").forEach((button) => {
+      button.addEventListener("click", () => setLanguage(button.dataset.langButton));
+    });
+
+    renderInputs();
+    calculate();
+  </script>
+</body>
+</html>
