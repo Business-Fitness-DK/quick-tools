@@ -107,17 +107,32 @@
     }
 
     .mode-switch {
+      align-items: center;
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      margin-top: 0.05rem;
+    }
+
+    .metric-field .mode-switch {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    .mode-switch-panel {
       background: var(--roi-wash);
       border: 1px solid rgba(52, 118, 91, 0.18);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius);
       display: grid;
-      gap: 0.75rem;
-      padding: 0.9rem;
+      gap: 0.45rem;
+      padding: 0.55rem;
     }
 
     .mode-title {
       color: var(--text-primary);
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       font-weight: 700;
     }
 
@@ -143,9 +158,10 @@
       color: var(--text-secondary);
       cursor: pointer;
       font: inherit;
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      padding: 0.65rem 0.55rem;
+      padding: 0.45rem 0.5rem;
+      white-space: nowrap;
     }
 
     .mode-buttons button.active {
@@ -182,7 +198,7 @@
 
     .metric-control {
       display: grid;
-      grid-template-columns: 1fr 94px;
+      grid-template-columns: 1fr minmax(118px, 0.28fr);
       gap: 0.7rem;
       align-items: center;
     }
@@ -212,7 +228,7 @@
 
     .result-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 0.75rem;
       padding: 1rem 1.1rem 0;
     }
@@ -235,10 +251,11 @@
 
     .result-value {
       color: var(--roi-ink);
-      font-size: clamp(1.45rem, 2.7vw, 2.1rem);
+      font-size: clamp(1.25rem, 2.2vw, 1.85rem);
       font-weight: 800;
       letter-spacing: 0;
       line-height: 1.1;
+      overflow-wrap: anywhere;
     }
 
     .result-note {
@@ -328,6 +345,7 @@
 
     @media (max-width: 520px) {
       .metric-control,
+      .mode-switch,
       .chart-row {
         grid-template-columns: 1fr;
       }
@@ -390,12 +408,12 @@
           </div>
           <div class="result-tile">
             <div class="result-label" data-i18n="month12Label">Month 12 revenue</div>
-            <div class="result-value" id="month12Revenue">0 kr.</div>
+            <div class="result-value" id="month12Revenue">€0</div>
             <div class="result-note" data-i18n="month12Note">Front-end revenue plus active recurring memberships in month 12.</div>
           </div>
           <div class="result-tile">
             <div class="result-label" data-i18n="profitLabel">12-month profit</div>
-            <div class="result-value" id="profit12">0 kr.</div>
+            <div class="result-value" id="profit12">€0</div>
             <div class="result-note" data-i18n="profitNote">Total 12-month revenue minus 12 months of ad spend.</div>
           </div>
         </div>
@@ -506,17 +524,17 @@
     };
 
     const fields = [
-      { id: "adSpend", min: 0, max: 300000, step: 1000, value: 60000, type: "currency" },
+      { id: "adSpend", min: 0, max: 300000, step: 100, value: 8000, type: "currency" },
       { id: "leadCount", min: 0, max: 2000, step: 1, value: 375, type: "number" },
-      { id: "cpl", min: 0, max: 1000, step: 10, value: 160, type: "currency" },
+      { id: "cpl", min: 0, max: 1000, step: 1, value: 20, type: "currency" },
       { id: "appointmentCount", min: 0, max: 300, step: 1, value: 50, type: "number" },
-      { id: "cpApt", min: 0, max: 6000, step: 50, value: 1200, type: "currency" },
+      { id: "cpApt", min: 0, max: 6000, step: 10, value: 160, type: "currency" },
       { id: "shownCount", min: 0, max: 300, step: 1, value: 38, type: "number" },
       { id: "showRate", min: 0, max: 100, step: 1, value: 75, type: "percent" },
       { id: "closeRate", min: 0, max: 100, step: 1, value: 35, type: "percent" },
       { id: "manualSales", min: 0, max: 200, step: 1, value: 14, type: "number" },
-      { id: "frontRevenue", min: 0, max: 50000, step: 500, value: 18000, type: "currency" },
-      { id: "membershipRevenue", min: 0, max: 5000, step: 100, value: 950, type: "currency" },
+      { id: "frontRevenue", min: 0, max: 50000, step: 100, value: 2400, type: "currency" },
+      { id: "membershipRevenue", min: 0, max: 5000, step: 10, value: 125, type: "currency" },
       { id: "membershipCount", min: 0, max: 200, step: 1, value: 8, type: "number" },
       { id: "membershipAttach", min: 0, max: 100, step: 1, value: 55, type: "percent" },
       { id: "retentionMonths", min: 0, max: 36, step: 1, value: 10, type: "months" }
@@ -524,28 +542,63 @@
 
     let language = "en";
     const inputModes = {
-      leads: "count",
-      appointments: "count",
-      shown: "count",
-      sales: "count",
-      memberships: "count"
+      leads: "rate",
+      appointments: "rate",
+      shown: "rate",
+      sales: "rate",
+      memberships: "rate"
     };
 
-    const currency = new Intl.NumberFormat("da-DK", {
-      style: "currency",
-      currency: "DKK",
-      maximumFractionDigits: 2
-    });
+    const modeFields = {
+      leadCount: "leads",
+      cpl: "leads",
+      appointmentCount: "appointments",
+      cpApt: "appointments",
+      shownCount: "shown",
+      showRate: "shown",
+      manualSales: "sales",
+      closeRate: "sales",
+      membershipCount: "memberships",
+      membershipAttach: "memberships"
+    };
 
-    const decimal = new Intl.NumberFormat("da-DK", {
-      maximumFractionDigits: 2
-    });
+    const DKK_PER_EUR = 7.45;
+
+    const currencyFormats = {
+      en: new Intl.NumberFormat("en-IE", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0
+      }),
+      da: new Intl.NumberFormat("da-DK", {
+        style: "currency",
+        currency: "DKK",
+        maximumFractionDigits: 0
+      })
+    };
+
+    const decimalFormats = {
+      en: new Intl.NumberFormat("en-IE", {
+        maximumFractionDigits: 2
+      }),
+      da: new Intl.NumberFormat("da-DK", {
+        maximumFractionDigits: 2
+      })
+    };
+
+    function formatCurrency(value) {
+      return currencyFormats[language].format(value);
+    }
+
+    function formatDecimal(value) {
+      return decimalFormats[language].format(value);
+    }
 
     function formatFieldValue(field, value) {
-      if (field.type === "percent") return `${decimal.format(value)}%`;
-      if (field.type === "months") return language === "da" ? `${decimal.format(value)} mdr.` : `${decimal.format(value)} mo.`;
-      if (field.type === "number") return decimal.format(value);
-      return currency.format(value);
+      if (field.type === "percent") return `${formatDecimal(value)}%`;
+      if (field.type === "months") return language === "da" ? `${formatDecimal(value)} mdr.` : `${formatDecimal(value)} mo.`;
+      if (field.type === "number") return formatDecimal(value);
+      return formatCurrency(value);
     }
 
     function parseDecimal(rawValue) {
@@ -563,13 +616,7 @@
 
     function renderInputs() {
       const container = document.getElementById("inputs");
-      container.innerHTML = `
-        ${renderModeSwitch("leads")}
-        ${renderModeSwitch("appointments")}
-        ${renderModeSwitch("shown")}
-        ${renderModeSwitch("sales")}
-        ${renderModeSwitch("memberships")}
-      ` + fields.filter((field) => {
+      container.innerHTML = fields.filter((field) => {
         if (field.id === "leadCount") return inputModes.leads === "count";
         if (field.id === "cpl") return inputModes.leads === "rate";
         if (field.id === "appointmentCount") return inputModes.appointments === "count";
@@ -583,18 +630,20 @@
         return true;
       }).map((field) => {
         const [label, help] = copy[language].fields[field.id];
+        const modeKey = modeFields[field.id];
         return `
-          <label class="metric-field">
+          <div class="metric-field">
             <div class="metric-label-row">
               <span class="metric-label">${label}</span>
               <span class="metric-value" data-value="${field.id}">${formatFieldValue(field, field.value)}</span>
             </div>
+            ${modeKey ? renderModeSwitch(modeKey) : ""}
             <span class="metric-help">${help}</span>
             <span class="metric-control">
-              <input type="range" min="${field.min}" max="${field.max}" step="${field.step}" value="${field.value}" data-input="${field.id}">
-              <input class="number-input" type="text" inputmode="decimal" value="${field.value}" data-number="${field.id}">
+              <input type="range" aria-label="${label}" min="${field.min}" max="${field.max}" step="${field.step}" value="${field.value}" data-input="${field.id}">
+              <input class="number-input" type="text" inputmode="decimal" aria-label="${label}" value="${field.value}" data-number="${field.id}">
             </span>
-          </label>
+          </div>
         `;
       }).join("");
 
@@ -620,9 +669,11 @@
       return `
         <div class="mode-switch">
           <div class="mode-title">${title}</div>
-          <div class="mode-buttons" aria-label="${title}">
-            <button type="button" class="${inputModes[key] === "count" ? "active" : ""}" data-mode-key="${key}" data-mode-value="count">${countLabel}</button>
-            <button type="button" class="${inputModes[key] === "rate" ? "active" : ""}" data-mode-key="${key}" data-mode-value="rate">${rateLabel}</button>
+          <div class="mode-switch-panel">
+            <div class="mode-buttons" aria-label="${title}">
+              <button type="button" class="${inputModes[key] === "count" ? "active" : ""}" data-mode-key="${key}" data-mode-value="count">${countLabel}</button>
+              <button type="button" class="${inputModes[key] === "rate" ? "active" : ""}" data-mode-key="${key}" data-mode-value="rate">${rateLabel}</button>
+            </div>
           </div>
         </div>
       `;
@@ -681,8 +732,8 @@
 
       document.getElementById("day30Roas").textContent = `${day30Roas.toFixed(2)}x`;
       document.getElementById("sales").textContent = sales.toFixed(1);
-      document.getElementById("month12Revenue").textContent = currency.format(months[11].revenue);
-      document.getElementById("profit12").textContent = currency.format(totalProfit);
+      document.getElementById("month12Revenue").textContent = formatCurrency(months[11].revenue);
+      document.getElementById("profit12").textContent = formatCurrency(totalProfit);
       const formulaText = copy[language].formulaManual;
       document.getElementById("formula").textContent = `${formulaText} ${language === "da" ? "Estimerede leads" : "Estimated leads"}: ${Math.round(leads)}.`;
 
@@ -695,12 +746,20 @@
         <div class="chart-row">
           <div class="month-label">${copy[language].month} ${item.month}</div>
           <div class="bar-track"><span class="bar-fill" style="width: ${(item.revenue / maxRevenue) * 100}%"></span></div>
-          <div class="month-value">${currency.format(item.revenue)}</div>
+          <div class="month-value">${formatCurrency(item.revenue)}</div>
         </div>
       `).join("");
     }
 
     function setLanguage(nextLanguage) {
+      if (nextLanguage !== language) {
+        fields.forEach((field) => {
+          if (field.type !== "currency") return;
+          field.value = nextLanguage === "en"
+            ? Math.round(field.value / DKK_PER_EUR)
+            : Math.round(field.value * DKK_PER_EUR);
+        });
+      }
       language = nextLanguage;
       document.documentElement.lang = nextLanguage;
       document.querySelectorAll("[data-i18n]").forEach((element) => {
