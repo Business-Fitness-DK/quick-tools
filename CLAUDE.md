@@ -42,18 +42,22 @@ quick-tools/
 ## Tools
 
 ### CSV Converter
-**Purpose**: Convert semicolon-separated CSV files to comma-separated format
+**Purpose**: Convert semicolon, comma or tab-separated exports to UTF-8 comma-separated CSV
 
 **Flow**:
 1. Upload CSV file (drag & drop or browse)
-2. File is automatically converted
-3. Success message with download button appears
-4. User downloads converted file
+2. Separator and first table row are suggested automatically
+3. User reviews source/output previews and adjusts the separator or first kept row if needed
+4. User downloads converted CSV after parsing and column-count validation pass
 
 **Features**:
-- Auto-detects delimiter (semicolon vs comma)
-- Simple two-button interface after upload
-- Clean success state
+- Parses quoted cells, escaped quotes and embedded line breaks without changing values
+- Detects semicolons, commas, tabs and Excel separator directives
+- Suggests skipping single-field report titles; other title/header layouts have manual controls
+- Reads UTF-8, UTF-16 with BOM and Windows-1252, with a warning for fallback decoding
+- Displays persistent errors for malformed quotes and inconsistent row widths
+- CSV/TXT/TSV inputs up to 20 MB; all processing stays in the browser
+- Run regression tests with `node --test tests/csv-converter.test.cjs`
 
 ## Adding New Tools
 

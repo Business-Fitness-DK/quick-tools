@@ -124,6 +124,18 @@
       margin-bottom: var(--spacing-md);
       color: var(--text-primary);
     }
+    .conversion-options { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+    .conversion-options label { flex: 1; min-width: 180px; font-size: .875rem; }
+    .conversion-options input, .conversion-options select { display: block; width: 100%; margin-top: .5rem; padding: .65rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); font: inherit; }
+    .help-text { font-size: .875rem; color: var(--text-secondary); margin-bottom: 1rem; }
+    .table-scroll { overflow: auto; max-height: 300px; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; font-size: .8125rem; width: 100%; }
+    th, td { padding: .5rem; border: 1px solid var(--border); text-align: left; white-space: pre-wrap; min-width: 90px; max-width: 260px; overflow-wrap: anywhere; }
+    tr.selected-row { background: #e8f0ff; }
+    tr.skipped-row { color: var(--text-secondary); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #alertArea { margin-top: 1rem; }
+    #fileSummary { overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
@@ -142,34 +154,48 @@
   <main class="container">
     <div class="tool-container">
       <h1 class="page-title">CSV Converter</h1>
-      <p class="page-subtitle">Convert semicolon-separated to comma-separated format</p>
+      <p class="page-subtitle">Convert CSV or tab-separated exports to comma-separated CSV</p>
 
       <!-- Upload Section -->
       <div class="upload-section" id="uploadSection">
         <div class="file-upload-area" id="dropZone">
           <div class="file-upload-icon">↑</div>
           <p class="upload-text">Drop CSV file or click to browse</p>
-          <input type="file" id="fileInput" accept=".csv,.txt" style="display: none;">
+          <input type="file" id="fileInput" accept=".csv,.txt,.tsv" style="display: none;">
           <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
             Choose File
           </button>
         </div>
       </div>
 
-      <!-- Success Message -->
-      <div id="successSection" class="hidden" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">✓</div>
-        <p style="font-size: 1.125rem; font-weight: 500; color: var(--text-primary); margin-bottom: var(--spacing-sm);">File converted successfully</p>
-        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--spacing-xl);">Your CSV file has been converted to comma-separated format</p>
-
-        <div class="actions" style="justify-content: center;">
-          <button class="btn btn-primary" id="downloadBtn">Download Converted CSV</button>
+      <section id="successSection" class="hidden" aria-label="Review conversion">
+        <p id="fileSummary" class="section-title"></p>
+        <div class="conversion-options">
+          <label for="delimiterInput">Columns separated by
+            <select id="delimiterInput">
+              <option value=";">Semicolons</option>
+              <option value=",">Commas</option>
+              <option value="tab">Tabs</option>
+            </select>
+          </label>
+          <label for="startRowInput">First row to keep
+            <input id="startRowInput" type="number" min="1" step="1" value="1" aria-describedby="rowHelp">
+          </label>
+        </div>
+        <p id="rowHelp" class="help-text">Choose the row with your column names to leave out report titles above it. For files without column names, choose the first data row. Row numbers count CSV records; a quoted cell can contain several lines.</p>
+        <p id="conversionSummary" class="section-title" aria-live="polite"></p>
+        <p class="preview-label">Source rows, up to 10 starting near your selection</p>
+        <div class="table-scroll"><table id="sourcePreview"></table></div>
+        <p class="preview-label">Converted CSV, first 5 rows</p>
+        <pre id="outputPreview" class="preview-box"></pre>
+        <div class="actions">
+          <button class="btn btn-primary" id="downloadBtn" disabled>Download Converted CSV</button>
           <button class="btn btn-secondary" id="resetBtn">Convert Another File</button>
         </div>
-      </div>
+      </section>
 
       <!-- Alert Area -->
-      <div id="alertArea"></div>
+      <div id="alertArea" role="status" aria-live="polite"></div>
 
     </div>
   </main>
@@ -178,6 +204,10 @@
     let originalContent = '';
     let convertedContent = '';
     let currentFileName = '';
+    let currentRows = [];
+    let readVersion = 0;
+    let encodingNote = '';
+    let formatUncertain = false;
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -186,6 +216,89 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
     const alertArea = document.getElementById('alertArea');
+    const delimiterInput = document.getElementById('delimiterInput');
+    const startRowInput = document.getElementById('startRowInput');
+
+    // Parse logical records, preserving quoted delimiters, escaped quotes and line breaks.
+    function parseCSV(text, delimiter, inferOnly = false) {
+      text = text.replace(/^\uFEFF/, '');
+      const rows = [];
+      let cells = [], cell = '', quoted = false, closed = false, line = 1, startLine = 1;
+      function finishRow() {
+        cells.push(cell);
+        rows.push({ cells, line: startLine });
+        cells = []; cell = ''; closed = false;
+      }
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (quoted) {
+          if (c === '"') {
+            if (text[i + 1] === '"') { cell += '"'; i++; }
+            else { quoted = false; closed = true; }
+          } else {
+            cell += c;
+            if (c === '\n' || (c === '\r' && text[i + 1] !== '\n')) line++;
+          }
+        } else if (c === delimiter) {
+          cells.push(cell); cell = ''; closed = false;
+        } else if (c === '\r' || c === '\n') {
+          finishRow();
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          line++; startLine = line;
+        } else if (c === '"' && cell === '' && !closed) {
+          quoted = true;
+        } else {
+          if (closed && !inferOnly) throw new Error(`Unexpected text after a closing quote on line ${line}. Check the separator or fix that cell in the source file.`);
+          cell += c;
+        }
+      }
+      if (quoted && !inferOnly) throw new Error(`A quoted cell starting in the record on line ${startLine} is not closed. Fix the quote in the source file.`);
+      if (cells.length || cell !== '' || closed) finishRow();
+      return rows;
+    }
+
+    function isBlank(row) { return row.cells.every(cell => cell.trim() === ''); }
+
+    function detectFormat(text) {
+      const directive = text.replace(/^\uFEFF/, '').match(/^sep=([;,\t])(?:\r\n|\r|\n|$)/i);
+      const candidates = [';', ',', '\t'].map(delimiter => {
+        try {
+          // Infer even with a damaged quote so another separator cannot hide the error.
+          // The selected format is always parsed strictly before a download is enabled.
+          const rows = parseCSV(text, delimiter, true);
+          const sample = rows.slice(directive ? 1 : 0, 101).filter(row => !isBlank(row));
+          const counts = new Map();
+          for (const row of sample) if (row.cells.length > 1) counts.set(row.cells.length, (counts.get(row.cells.length) || 0) + 1);
+          const modes = [...counts].sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+          const width = modes[0]?.[0] || 1;
+          const count = modes[0]?.[1] || 0;
+          const score = count ? count / sample.length * Math.log2(width) * count / (count + 1) : 0;
+          return { delimiter, rows, width, score, directive: directive?.[1] === delimiter };
+        } catch (error) { return { delimiter, error, score: -1 }; }
+      }).sort((a, b) => Number(b.directive || false) - Number(a.directive || false) || b.score - a.score);
+      const best = candidates[0];
+      if (best.error) throw best.error;
+      // Only single-field title lines are safe enough to suggest skipping automatically.
+      // A narrower multi-column row might be the real header of a damaged table.
+      const minimum = directive ? 1 : 0;
+      let start = best.rows.findIndex((row, index) => index >= minimum && !isBlank(row) && row.cells.length === best.width);
+      if (best.rows.slice(minimum, start).some(row => !isBlank(row) && row.cells.length > 1)) {
+        start = best.rows.findIndex((row, index) => index >= minimum && !isBlank(row));
+      }
+      return { ...best, start: Math.max(0, start), uncertain: !best.directive && (best.score <= 0 || Math.abs(best.score - candidates[1].score) < .15) };
+    }
+
+    function serializeCSV(rows) {
+      return rows.map(row => row.cells.map(cell => /[",\r\n]/.test(cell) ? '"' + cell.replace(/"/g, '""') + '"' : cell).join(',')).join('\r\n') + '\r\n';
+    }
+
+    function decodeFile(buffer) {
+      const bytes = new Uint8Array(buffer);
+      if (bytes[0] === 0xff && bytes[1] === 0xfe) return { text: new TextDecoder('utf-16le', { fatal: true }).decode(bytes), note: '' };
+      if (bytes[0] === 0xfe && bytes[1] === 0xff) return { text: new TextDecoder('utf-16be', { fatal: true }).decode(bytes), note: '' };
+      try { return { text: new TextDecoder('utf-8', { fatal: true }).decode(bytes), note: '' }; }
+      catch { return { text: new TextDecoder('windows-1252').decode(bytes), note: 'Read as Windows-1252. Check accented letters in the preview.' }; }
+    }
 
     // File Upload
     dropZone.addEventListener('click', (e) => {
@@ -215,80 +328,135 @@
       if (file) handleFile(file);
     });
 
-    function handleFile(file) {
-      if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {
-        showAlert('Please upload a CSV or TXT file', 'error');
+    async function handleFile(file) {
+      const version = ++readVersion;
+      convertedContent = '';
+      downloadBtn.disabled = true;
+      successSection.classList.add('hidden');
+      uploadSection.classList.remove('hidden');
+      alertArea.replaceChildren();
+      if (!/\.(csv|txt|tsv)$/i.test(file.name)) {
+        showAlert('Please upload a CSV, TXT or TSV file. Export Excel workbooks as CSV first.', 'error');
         return;
       }
-
-      currentFileName = file.name;
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        originalContent = e.target.result;
+      if (file.size > 20 * 1024 * 1024) {
+        showAlert('This file is larger than 20 MB. Split the export into smaller files and try again.', 'error');
+        return;
+      }
+      try {
+        const decoded = decodeFile(await file.arrayBuffer());
+        if (version !== readVersion) return;
+        if (decoded.text.includes('\0')) throw new Error('This file contains unsupported binary data. Export it as UTF-8 CSV and try again.');
+        originalContent = decoded.text;
+        encodingNote = decoded.note;
+        currentFileName = file.name;
+        successSection.classList.remove('hidden');
+        uploadSection.classList.add('hidden');
+        document.getElementById('fileSummary').textContent = file.name;
+        const detected = detectFormat(originalContent);
+        delimiterInput.value = detected.delimiter === '\t' ? 'tab' : detected.delimiter;
+        startRowInput.value = detected.start + 1;
+        formatUncertain = detected.uncertain;
         processFile();
-      };
+      } catch (error) {
+        if (version !== readVersion) return;
+        showAlert('Could not convert this file. ' + error.message, 'error');
+      } finally {
+        if (version === readVersion) fileInput.value = '';
+      }
+    }
 
-      reader.onerror = () => {
-        showAlert('Error reading file', 'error');
-      };
-
-      reader.readAsText(file);
+    function renderSource(start) {
+      const table = document.getElementById('sourcePreview');
+      table.replaceChildren();
+      const from = Math.max(0, start - 2);
+      for (let i = from; i < Math.min(currentRows.length, from + 10); i++) {
+        const tr = document.createElement('tr');
+        tr.className = i < start ? 'skipped-row' : i === start ? 'selected-row' : '';
+        const label = document.createElement('th');
+        label.scope = 'row';
+        label.textContent = `Row ${i + 1}${i === start ? ' (first kept)' : i < start ? ' (skipped)' : ''}`;
+        tr.appendChild(label);
+        for (const cell of currentRows[i].cells.slice(0, 20)) {
+          const td = document.createElement('td');
+          td.textContent = cell.length > 300 ? cell.slice(0, 300) + '…' : cell;
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
     }
 
     function processFile() {
+      convertedContent = '';
+      downloadBtn.disabled = true;
+      alertArea.replaceChildren();
+      document.getElementById('outputPreview').textContent = '';
+      document.getElementById('conversionSummary').textContent = '';
+      document.getElementById('sourcePreview').replaceChildren();
       try {
-        const firstLine = originalContent.split('\n')[0];
-        const semicolonCount = (firstLine.match(/;/g) || []).length;
-        const commaCount = (firstLine.match(/,/g) || []).length;
-
-        let needsConversion = semicolonCount > commaCount;
-
-        if (needsConversion) {
-          convertedContent = originalContent.replace(/;/g, ',');
-        } else {
-          convertedContent = originalContent;
-          showAlert('File is already comma-separated, no conversion needed', 'success');
-        }
-
-        // Hide upload section, show success section
-        uploadSection.classList.add('hidden');
-        successSection.classList.remove('hidden');
-
+        currentRows = parseCSV(originalContent, delimiterInput.value === 'tab' ? '\t' : delimiterInput.value);
+        if (!currentRows.length || currentRows.every(isBlank)) throw new Error('This file is empty. Upload a file with data.');
+        startRowInput.max = currentRows.length;
+        const start = Number(startRowInput.value) - 1;
+        if (!Number.isInteger(start) || start < 0 || start >= currentRows.length) throw new Error('Choose a first row that exists in this file.');
+        renderSource(start);
+        const rows = currentRows.slice(start).filter(row => !isBlank(row));
+        if (!rows.length) throw new Error('No data found. Choose an earlier first row or upload a file with data.');
+        const width = rows[0].cells.length;
+        const mismatched = rows.find(row => row.cells.length !== width);
+        if (mismatched) throw new Error(`Line ${mismatched.line} has ${mismatched.cells.length} columns; the first kept row has ${width}. Check the separator and first row, or fix this row in the source file.`);
+        convertedContent = serializeCSV(rows);
+        document.getElementById('conversionSummary').textContent = `${rows.length} rows kept · ${width} columns · ${start} leading rows skipped`;
+        document.getElementById('outputPreview').textContent = serializeCSV(rows.slice(0, 5));
+        downloadBtn.disabled = false;
+        const notes = ['Check that the first kept row and columns look right. The source preview shows up to 20 columns; the download includes all columns.'];
+        if (formatUncertain) notes.push('The separator is uncertain. Check it before downloading.');
+        if (width === 1) notes.push('Only one column found. Change the separator if you expected more.');
+        if (encodingNote) notes.push(encodingNote);
+        showAlert(notes.join(' '), 'success');
       } catch (error) {
-        showAlert('Error processing file: ' + error.message, 'error');
+        showAlert(error.message, 'error');
       }
     }
 
+    delimiterInput.addEventListener('change', () => {
+      formatUncertain = false;
+      startRowInput.value = 1;
+      processFile();
+    });
+    startRowInput.addEventListener('input', processFile);
+
     downloadBtn.addEventListener('click', () => {
-      const blob = new Blob([convertedContent], { type: 'text/csv' });
+      if (!convertedContent || downloadBtn.disabled) return;
+      const blob = new Blob([convertedContent], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = currentFileName.replace('.csv', '_converted.csv').replace('.txt', '_converted.csv');
+      a.download = currentFileName.replace(/\.(csv|txt|tsv)$/i, '_converted.csv');
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showAlert('Downloaded successfully!', 'success');
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
 
     resetBtn.addEventListener('click', () => {
+      readVersion++;
       originalContent = '';
       convertedContent = '';
       currentFileName = '';
       fileInput.value = '';
       uploadSection.classList.remove('hidden');
       successSection.classList.add('hidden');
-      alertArea.innerHTML = '';
+      alertArea.replaceChildren();
+      downloadBtn.disabled = true;
     });
 
     function showAlert(message, type) {
       const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-      alertArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
-      setTimeout(() => {
-        alertArea.innerHTML = '';
-      }, 3000);
+      const alert = document.createElement('div');
+      alert.className = `alert ${alertClass}`;
+      alert.textContent = message;
+      alertArea.replaceChildren(alert);
     }
   </script>
 
