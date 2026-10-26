@@ -19,13 +19,14 @@ Convert semicolon, comma or tab-separated exports to UTF-8 comma-separated CSV.
   - Drag & drop file upload
   - Detects the separator across multiple records, including Excel `sep=` directives
   - Automatically skips single-field report titles before the table
+  - Handles titles padded with empty columns before recognizable English, Danish or German contact headers
   - Simple upload and download flow with no configuration
   - Preserves quoted separators, decimal commas, escaped quotes and multiline cells
   - Reads UTF-8, UTF-16 with a BOM, and Windows-1252 exports
   - Reports malformed quotes and inconsistent column counts before allowing a download
   - Supports CSV, TXT and TSV files up to 20 MB, entirely in the browser
 
-Upload a file, download the converted CSV, then import it into GHL. Output is comma-separated UTF-8 without a BOM, with CRLF record endings. Cell values and column names are preserved. Obvious single-field title lines before the table and entirely blank rows are excluded. Ambiguous title/header layouts are preserved rather than guessed; remove extra report rows in the source file if needed. GHL column mapping still happens in GHL.
+Upload a file, download the converted CSV, then import it into GHL. Output is comma-separated UTF-8 without a BOM, with CRLF record endings. Cell values and column names are preserved. Obvious single-field title lines before the table and entirely blank rows are excluded. Titles padded with empty columns are also removed when followed by a recognizable contact header with at least two of name, email and phone. Ambiguous title/header layouts are preserved rather than guessed; remove extra report rows in the source file if needed. GHL column mapping still happens in GHL.
 
 For conversion regressions, run `node --test tests/csv-converter.test.cjs`. The tests execute the converter's inline script directly with a minimal DOM, covering parsing, detection, encoding and UI validation state. They do not replace browser testing or testing a client's failing export.
 

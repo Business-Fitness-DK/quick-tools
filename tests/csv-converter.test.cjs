@@ -168,3 +168,31 @@ test('the interface has no delimiter, header-row or preview controls', () => {
   const html = fs.readFileSync(new URL('../tools/csv-converter.html', `file://${__filename}`), 'utf8');
   assert.doesNotMatch(html, /delimiterInput|startRowInput|sourcePreview|outputPreview|<select/);
 });
+
+test('German export with multiline padded title and blank records starts at the actual headers', async () => {
+  const app = setup();
+  const header = ['Erstellt am', 'Vollständiger Name', 'Handy', 'E-Mail', 'Guthaben', 'Tags'];
+  const contact = ['2026-10-26', 'Erika Muster', '+491234567890', 'erika@example.com', '0', ''];
+  const text = '"\r\n                                    Berichte\r\n                        ",,,,,\r\n\r\n' + header.join(',') + '\r\n\r\n' + contact.join(',') + '\r\n\r\n';
+  await app.upload(text, 'User_converted-2.csv');
+  assert.equal(app.el('downloadBtn').disabled, false);
+  assert.deepEqual(cells(app.call('parseCSV', app.run('convertedContent'), ',')), [header, contact]);
+});
+
+test('padded titles are removed for English and Danish contact headers with either delimiter', () => {
+  const app = setup();
+  for (const delimiter of [',', ';', '\t']) {
+    for (const header of [['Name', 'Email', 'Phone'], ['Navn', 'E-mail', 'Telefon']]) {
+      const text = ['Member report' + delimiter.repeat(2), header.join(delimiter), ['Anna', 'anna@example.com', '12345678'].join(delimiter)].join('\n');
+      const output = app.call('convertCSV', text);
+      assert.deepEqual(cells(app.call('parseCSV', output, ',')), [header, ['Anna', 'anna@example.com', '12345678']]);
+    }
+  }
+});
+
+test('sparse contacts and ambiguous multi-field title rows are retained', () => {
+  const app = setup();
+  assert.equal(app.call('convertCSV', 'Anna,,\nBo,bo@example.com,1234'), 'Anna,,\r\nBo,bo@example.com,1234\r\n');
+  assert.equal(app.call('convertCSV', 'Report,October,\nName,Email,Phone\nAnna,anna@example.com,1234'), 'Report,October,\r\nName,Email,Phone\r\nAnna,anna@example.com,1234\r\n');
+  assert.equal(app.call('convertCSV', 'Report,,\nProduct,Price,Stock\nBox,12,5'), 'Report,,\r\nProduct,Price,Stock\r\nBox,12,5\r\n');
+});

@@ -159,6 +159,19 @@
 
     function isBlank(row) { return row.cells.every(cell => cell.trim() === ''); }
 
+    function isContactHeader(row) {
+      // Recognize a contact table before skipping padded report titles. Values in
+      // sparse contact rows must not be mistaken for a title and silently removed.
+      const groups = new Set();
+      for (const cell of row.cells) {
+        const label = cell.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (/^(name|fullname|firstname|lastname|navn|fornavn|efternavn|fuldenavn|vorname|nachname|vollstandigername)$/.test(label)) groups.add('name');
+        if (/^(email|emailaddress|emailadresse|epost)$/.test(label)) groups.add('email');
+        if (/^(phone|phonenumber|mobile|mobil|mobilnummer|telefon|telefonnummer|handy)$/.test(label)) groups.add('phone');
+      }
+      return groups.size >= 2;
+    }
+
     function detectFormat(text) {
       const directive = text.replace(/^\uFEFF/, '').match(/^sep=([;,\t])(?:\r\n|\r|\n|$)/i);
       const candidates = [';', ',', '\t'].map(delimiter => {
@@ -184,6 +197,12 @@
       let start = best.rows.findIndex((row, index) => index >= minimum && !isBlank(row) && row.cells.length === best.width);
       if (best.rows.slice(minimum, start).some(row => !isBlank(row) && row.cells.length > 1)) {
         start = best.rows.findIndex((row, index) => index >= minimum && !isBlank(row));
+      }
+      // Some exporters pad a title to the table width with empty columns.
+      // Skip it only when a recognizable contact header follows sparse title rows.
+      const header = best.rows.findIndex((row, index) => index >= minimum && row.cells.length === best.width && isContactHeader(row));
+      if (header > start && best.rows.slice(minimum, header).every(row => row.cells.filter(cell => cell.trim() !== '').length <= 1)) {
+        start = header;
       }
       return { delimiter: best.delimiter, start: Math.max(0, start) };
     }

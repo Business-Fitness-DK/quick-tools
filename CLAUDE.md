@@ -54,6 +54,7 @@ quick-tools/
 - Parses quoted cells, escaped quotes and embedded line breaks without changing values
 - Detects semicolons, commas, tabs and Excel separator directives
 - Automatically skips obvious single-field report titles; ambiguous rows are preserved
+- Skips titles padded with empty columns before recognizable English, Danish or German contact headers
 - No separator settings, header-row settings or previews
 - Reads UTF-8, UTF-16 with BOM and Windows-1252, with a warning for fallback decoding
 - Displays persistent errors for malformed quotes and inconsistent row widths
