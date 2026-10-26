@@ -30,83 +30,6 @@
       margin-bottom: var(--spacing-md);
     }
 
-    .file-info {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      padding: var(--spacing-md);
-      background: var(--surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      margin-top: var(--spacing-md);
-      font-size: 0.875rem;
-    }
-
-    .file-name {
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .file-size {
-      color: var(--text-tertiary);
-      font-size: 0.8125rem;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: var(--spacing-lg);
-    }
-
-    .stat-card {
-      padding: var(--spacing-md);
-      background: var(--surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.25rem;
-    }
-
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .preview-section {
-      margin-top: var(--spacing-xl);
-    }
-
-    .preview-label {
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .preview-box {
-      background: var(--surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: var(--spacing-md);
-      max-height: 200px;
-      overflow: auto;
-      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
-      font-size: 0.8125rem;
-      line-height: 1.6;
-      white-space: pre;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-lg);
-    }
-
     .actions {
       display: flex;
       gap: 0.75rem;
@@ -118,24 +41,22 @@
       min-width: 140px;
     }
 
-    .section-title {
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin-bottom: var(--spacing-md);
-      color: var(--text-primary);
+    .success-message {
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
     }
-    .conversion-options { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
-    .conversion-options label { flex: 1; min-width: 180px; font-size: .875rem; }
-    .conversion-options input, .conversion-options select { display: block; width: 100%; margin-top: .5rem; padding: .65rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); font: inherit; }
-    .help-text { font-size: .875rem; color: var(--text-secondary); margin-bottom: 1rem; }
-    .table-scroll { overflow: auto; max-height: 300px; margin-bottom: 1.5rem; }
-    table { border-collapse: collapse; font-size: .8125rem; width: 100%; }
-    th, td { padding: .5rem; border: 1px solid var(--border); text-align: left; white-space: pre-wrap; min-width: 90px; max-width: 260px; overflow-wrap: anywhere; }
-    tr.selected-row { background: #e8f0ff; }
-    tr.skipped-row { color: var(--text-secondary); }
-    button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .success-message h2 {
+      font-size: 1.125rem;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .success-message p {
+      font-size: .875rem;
+      color: var(--text-secondary);
+    }
+
     #alertArea { margin-top: 1rem; }
-    #fileSummary { overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
@@ -154,7 +75,7 @@
   <main class="container">
     <div class="tool-container">
       <h1 class="page-title">CSV Converter</h1>
-      <p class="page-subtitle">Convert CSV or tab-separated exports to comma-separated CSV</p>
+      <p class="page-subtitle">Make your CSV comma-separated for importing into GHL</p>
 
       <!-- Upload Section -->
       <div class="upload-section" id="uploadSection">
@@ -168,28 +89,13 @@
         </div>
       </div>
 
-      <section id="successSection" class="hidden" aria-label="Review conversion">
-        <p id="fileSummary" class="section-title"></p>
-        <div class="conversion-options">
-          <label for="delimiterInput">Columns separated by
-            <select id="delimiterInput">
-              <option value=";">Semicolons</option>
-              <option value=",">Commas</option>
-              <option value="tab">Tabs</option>
-            </select>
-          </label>
-          <label for="startRowInput">First row to keep
-            <input id="startRowInput" type="number" min="1" step="1" value="1" aria-describedby="rowHelp">
-          </label>
+      <section id="successSection" class="hidden" aria-label="Conversion complete">
+        <div class="success-message">
+          <h2>Your CSV is ready</h2>
+          <p>Download the comma-separated file, then upload it to GHL.</p>
         </div>
-        <p id="rowHelp" class="help-text">Choose the row with your column names to leave out report titles above it. For files without column names, choose the first data row. Row numbers count CSV records; a quoted cell can contain several lines.</p>
-        <p id="conversionSummary" class="section-title" aria-live="polite"></p>
-        <p class="preview-label">Source rows, up to 10 starting near your selection</p>
-        <div class="table-scroll"><table id="sourcePreview"></table></div>
-        <p class="preview-label">Converted CSV, first 5 rows</p>
-        <pre id="outputPreview" class="preview-box"></pre>
         <div class="actions">
-          <button class="btn btn-primary" id="downloadBtn" disabled>Download Converted CSV</button>
+          <button class="btn btn-primary" id="downloadBtn" disabled>Download CSV</button>
           <button class="btn btn-secondary" id="resetBtn">Convert Another File</button>
         </div>
       </section>
@@ -201,13 +107,9 @@
   </main>
 
   <script>
-    let originalContent = '';
     let convertedContent = '';
     let currentFileName = '';
-    let currentRows = [];
     let readVersion = 0;
-    let encodingNote = '';
-    let formatUncertain = false;
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -216,8 +118,6 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const resetBtn = document.getElementById('resetBtn');
     const alertArea = document.getElementById('alertArea');
-    const delimiterInput = document.getElementById('delimiterInput');
-    const startRowInput = document.getElementById('startRowInput');
 
     // Parse logical records, preserving quoted delimiters, escaped quotes and line breaks.
     function parseCSV(text, delimiter, inferOnly = false) {
@@ -248,7 +148,7 @@
         } else if (c === '"' && cell === '' && !closed) {
           quoted = true;
         } else {
-          if (closed && !inferOnly) throw new Error(`Unexpected text after a closing quote on line ${line}. Check the separator or fix that cell in the source file.`);
+          if (closed && !inferOnly) throw new Error(`Unexpected text after a closing quote on line ${line}. Fix that cell in the source file and upload it again.`);
           cell += c;
         }
       }
@@ -285,7 +185,7 @@
       if (best.rows.slice(minimum, start).some(row => !isBlank(row) && row.cells.length > 1)) {
         start = best.rows.findIndex((row, index) => index >= minimum && !isBlank(row));
       }
-      return { ...best, start: Math.max(0, start), uncertain: !best.directive && (best.score <= 0 || Math.abs(best.score - candidates[1].score) < .15) };
+      return { delimiter: best.delimiter, start: Math.max(0, start) };
     }
 
     function serializeCSV(rows) {
@@ -297,7 +197,7 @@
       if (bytes[0] === 0xff && bytes[1] === 0xfe) return { text: new TextDecoder('utf-16le', { fatal: true }).decode(bytes), note: '' };
       if (bytes[0] === 0xfe && bytes[1] === 0xff) return { text: new TextDecoder('utf-16be', { fatal: true }).decode(bytes), note: '' };
       try { return { text: new TextDecoder('utf-8', { fatal: true }).decode(bytes), note: '' }; }
-      catch { return { text: new TextDecoder('windows-1252').decode(bytes), note: 'Read as Windows-1252. Check accented letters in the preview.' }; }
+      catch { return { text: new TextDecoder('windows-1252').decode(bytes), note: 'If accented names look wrong after import, export the source as UTF-8 CSV and try again.' }; }
     }
 
     // File Upload
@@ -347,17 +247,12 @@
         const decoded = decodeFile(await file.arrayBuffer());
         if (version !== readVersion) return;
         if (decoded.text.includes('\0')) throw new Error('This file contains unsupported binary data. Export it as UTF-8 CSV and try again.');
-        originalContent = decoded.text;
-        encodingNote = decoded.note;
+        convertedContent = convertCSV(decoded.text);
         currentFileName = file.name;
+        downloadBtn.disabled = false;
         successSection.classList.remove('hidden');
         uploadSection.classList.add('hidden');
-        document.getElementById('fileSummary').textContent = file.name;
-        const detected = detectFormat(originalContent);
-        delimiterInput.value = detected.delimiter === '\t' ? 'tab' : detected.delimiter;
-        startRowInput.value = detected.start + 1;
-        formatUncertain = detected.uncertain;
-        processFile();
+        if (decoded.note) showAlert(decoded.note, 'success');
       } catch (error) {
         if (version !== readVersion) return;
         showAlert('Could not convert this file. ' + error.message, 'error');
@@ -366,65 +261,16 @@
       }
     }
 
-    function renderSource(start) {
-      const table = document.getElementById('sourcePreview');
-      table.replaceChildren();
-      const from = Math.max(0, start - 2);
-      for (let i = from; i < Math.min(currentRows.length, from + 10); i++) {
-        const tr = document.createElement('tr');
-        tr.className = i < start ? 'skipped-row' : i === start ? 'selected-row' : '';
-        const label = document.createElement('th');
-        label.scope = 'row';
-        label.textContent = `Row ${i + 1}${i === start ? ' (first kept)' : i < start ? ' (skipped)' : ''}`;
-        tr.appendChild(label);
-        for (const cell of currentRows[i].cells.slice(0, 20)) {
-          const td = document.createElement('td');
-          td.textContent = cell.length > 300 ? cell.slice(0, 300) + '…' : cell;
-          tr.appendChild(td);
-        }
-        table.appendChild(tr);
-      }
+    function convertCSV(text) {
+      const detected = detectFormat(text);
+      const parsed = parseCSV(text, detected.delimiter);
+      const rows = parsed.slice(detected.start).filter(row => !isBlank(row));
+      if (!rows.length) throw new Error('This file is empty. Upload a file with data.');
+      const width = rows[0].cells.length;
+      const mismatched = rows.find(row => row.cells.length !== width);
+      if (mismatched) throw new Error(`Line ${mismatched.line} has ${mismatched.cells.length} columns instead of ${width}. Fix this row in the source file and upload it again.`);
+      return serializeCSV(rows);
     }
-
-    function processFile() {
-      convertedContent = '';
-      downloadBtn.disabled = true;
-      alertArea.replaceChildren();
-      document.getElementById('outputPreview').textContent = '';
-      document.getElementById('conversionSummary').textContent = '';
-      document.getElementById('sourcePreview').replaceChildren();
-      try {
-        currentRows = parseCSV(originalContent, delimiterInput.value === 'tab' ? '\t' : delimiterInput.value);
-        if (!currentRows.length || currentRows.every(isBlank)) throw new Error('This file is empty. Upload a file with data.');
-        startRowInput.max = currentRows.length;
-        const start = Number(startRowInput.value) - 1;
-        if (!Number.isInteger(start) || start < 0 || start >= currentRows.length) throw new Error('Choose a first row that exists in this file.');
-        renderSource(start);
-        const rows = currentRows.slice(start).filter(row => !isBlank(row));
-        if (!rows.length) throw new Error('No data found. Choose an earlier first row or upload a file with data.');
-        const width = rows[0].cells.length;
-        const mismatched = rows.find(row => row.cells.length !== width);
-        if (mismatched) throw new Error(`Line ${mismatched.line} has ${mismatched.cells.length} columns; the first kept row has ${width}. Check the separator and first row, or fix this row in the source file.`);
-        convertedContent = serializeCSV(rows);
-        document.getElementById('conversionSummary').textContent = `${rows.length} rows kept · ${width} columns · ${start} leading rows skipped`;
-        document.getElementById('outputPreview').textContent = serializeCSV(rows.slice(0, 5));
-        downloadBtn.disabled = false;
-        const notes = ['Check that the first kept row and columns look right. The source preview shows up to 20 columns; the download includes all columns.'];
-        if (formatUncertain) notes.push('The separator is uncertain. Check it before downloading.');
-        if (width === 1) notes.push('Only one column found. Change the separator if you expected more.');
-        if (encodingNote) notes.push(encodingNote);
-        showAlert(notes.join(' '), 'success');
-      } catch (error) {
-        showAlert(error.message, 'error');
-      }
-    }
-
-    delimiterInput.addEventListener('change', () => {
-      formatUncertain = false;
-      startRowInput.value = 1;
-      processFile();
-    });
-    startRowInput.addEventListener('input', processFile);
 
     downloadBtn.addEventListener('click', () => {
       if (!convertedContent || downloadBtn.disabled) return;
@@ -441,7 +287,6 @@
 
     resetBtn.addEventListener('click', () => {
       readVersion++;
-      originalContent = '';
       convertedContent = '';
       currentFileName = '';
       fileInput.value = '';

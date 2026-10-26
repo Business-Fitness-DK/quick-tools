@@ -46,14 +46,15 @@ quick-tools/
 
 **Flow**:
 1. Upload CSV file (drag & drop or browse)
-2. Separator and first table row are suggested automatically
-3. User reviews source/output previews and adjusts the separator or first kept row if needed
-4. User downloads converted CSV after parsing and column-count validation pass
+2. Separator detection, obvious title-row removal and conversion run automatically
+3. Success message appears with Download CSV and Convert Another File
+4. User downloads comma-separated UTF-8 CSV and imports it into GHL
 
 **Features**:
 - Parses quoted cells, escaped quotes and embedded line breaks without changing values
 - Detects semicolons, commas, tabs and Excel separator directives
-- Suggests skipping single-field report titles; other title/header layouts have manual controls
+- Automatically skips obvious single-field report titles; ambiguous rows are preserved
+- No separator settings, header-row settings or previews
 - Reads UTF-8, UTF-16 with BOM and Windows-1252, with a warning for fallback decoding
 - Displays persistent errors for malformed quotes and inconsistent row widths
 - CSV/TXT/TSV inputs up to 20 MB; all processing stays in the browser

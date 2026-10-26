@@ -18,14 +18,14 @@ Convert semicolon, comma or tab-separated exports to UTF-8 comma-separated CSV.
 - **Features**:
   - Drag & drop file upload
   - Detects the separator across multiple records, including Excel `sep=` directives
-  - Suggests skipping single-field report titles before the table; choose **First row to keep** for other layouts
-  - Manual separator and first-row controls with source and output previews
+  - Automatically skips single-field report titles before the table
+  - Simple upload and download flow with no configuration
   - Preserves quoted separators, decimal commas, escaped quotes and multiline cells
   - Reads UTF-8, UTF-16 with a BOM, and Windows-1252 exports
   - Reports malformed quotes and inconsistent column counts before allowing a download
   - Supports CSV, TXT and TSV files up to 20 MB, entirely in the browser
 
-Review the first kept row before downloading. Title rows with multiple fields cannot reliably be distinguished from column names or data, so select the correct row manually. Rows before that selection and entirely blank rows are excluded. Files without headers are supported by keeping the first data row. Source previews show up to 10 rows and 20 columns; downloads retain every column. Output uses CRLF record endings and UTF-8 without a BOM.
+Upload a file, download the converted CSV, then import it into GHL. Output is comma-separated UTF-8 without a BOM, with CRLF record endings. Cell values and column names are preserved. Obvious single-field title lines before the table and entirely blank rows are excluded. Ambiguous title/header layouts are preserved rather than guessed; remove extra report rows in the source file if needed. GHL column mapping still happens in GHL.
 
 For conversion regressions, run `node --test tests/csv-converter.test.cjs`. The tests execute the converter's inline script directly with a minimal DOM, covering parsing, detection, encoding and UI validation state. They do not replace browser testing or testing a client's failing export.
 

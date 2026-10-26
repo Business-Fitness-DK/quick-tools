@@ -70,14 +70,14 @@ test('detects quote errors and does not enable a corrupt download', async () => 
   assert.throws(() => app.call('parseCSV', 'Name;Note\nAnna;"a"bad', ';'), /closing quote/);
 });
 
-test('extra report row can be removed manually without changing data', async () => {
+test('conversion is automatic and excludes obvious report-title lines', async () => {
   const app = setup();
-  await app.upload('Member report;October\nName;Email\nAnna;a@b.dk');
-  assert.equal(app.el('startRowInput').value, 1);
-  app.el('startRowInput').value = '2';
-  app.el('startRowInput').listeners.input();
+  await app.upload('Member report\nExported October\n\nName;Email\nAnna;a@b.dk');
   assert.equal(app.run('convertedContent'), 'Name,Email\r\nAnna,a@b.dk\r\n');
   assert.equal(app.el('downloadBtn').disabled, false);
+  assert.equal(app.el('successSection').classList.contains('hidden'), false);
+  assert.equal(app.el('uploadSection').classList.contains('hidden'), true);
+  assert.equal(app.el('alertArea').children.length, 0);
 });
 
 test('inconsistent rows block downloads and report source line', async () => {
@@ -85,20 +85,9 @@ test('inconsistent rows block downloads and report source line', async () => {
   await app.upload('Title\nName;Email\nAnna;a@b.dk\nBo;b@b.dk;extra');
   assert.equal(app.el('downloadBtn').disabled, true);
   assert.match(app.el('alertArea').children[0].textContent, /Line 4 has 3 columns/);
-  app.el('startRowInput').value = '0'; app.call('processFile');
   assert.equal(app.run('convertedContent'), '');
-  assert.match(app.el('alertArea').children[0].textContent, /first row/);
-});
-
-test('manual delimiter and row changes recover after a wrong guess', async () => {
-  const app = setup();
-  await app.upload('Report\nName;Email\nAnna;a@b.dk');
-  app.el('delimiterInput').value = ','; app.el('delimiterInput').listeners.change();
-  assert.equal(app.el('startRowInput').value, 1);
-  app.el('delimiterInput').value = ';'; app.el('delimiterInput').listeners.change();
-  assert.equal(app.el('downloadBtn').disabled, true);
-  app.el('startRowInput').value = '2'; app.call('processFile');
-  assert.equal(app.run('convertedContent'), 'Name,Email\r\nAnna,a@b.dk\r\n');
+  assert.equal(app.el('successSection').classList.contains('hidden'), true);
+  assert.equal(app.el('uploadSection').classList.contains('hidden'), false);
 });
 
 test('empty files fail; uppercase extensions and single columns are supported', async () => {
@@ -108,7 +97,7 @@ test('empty files fail; uppercase extensions and single columns are supported', 
   await app.upload('Name\nAnna', 'CLIENT.CSV');
   assert.equal(app.el('downloadBtn').disabled, false);
   assert.equal(app.run('convertedContent'), 'Name\r\nAnna\r\n');
-  assert.match(app.el('alertArea').children[0].textContent, /Only one column/);
+  assert.equal(app.el('alertArea').children.length, 0);
 });
 
 test('UTF-8 BOM, UTF-16 BOMs and Windows-1252 preserve Danish characters', () => {
@@ -116,7 +105,7 @@ test('UTF-8 BOM, UTF-16 BOMs and Windows-1252 preserve Danish characters', () =>
   for (const bytes of [Buffer.from('\ufeffÆØÅ'), Buffer.concat([Buffer.from([255, 254]), Buffer.from('ÆØÅ', 'utf16le')]), Buffer.from([254, 255, 0, 198, 0, 216, 0, 197]), Buffer.from([198, 216, 197])]) {
     assert.equal(app.call('decodeFile', bytes).text, 'ÆØÅ');
   }
-  assert.match(app.call('decodeFile', Buffer.from([198])).note, /Windows-1252/);
+  assert.match(app.call('decodeFile', Buffer.from([198])).note, /UTF-8 CSV/);
 });
 
 test('blank lines are ignored and multiline source line errors are accurate', async () => {
@@ -161,9 +150,8 @@ test('oversized files and binary content fail without downloads', async () => {
 test('a narrower multi-column header is retained and flagged, never silently discarded', async () => {
   const app = setup();
   await app.upload('Name;Email\nAnna;a@b.dk;extra\nBo;b@b.dk;extra\nChris;c@b.dk;extra');
-  assert.equal(app.el('startRowInput').value, 1);
   assert.equal(app.el('downloadBtn').disabled, true);
-  assert.match(app.el('alertArea').children[0].textContent, /Line 2 has 3 columns; the first kept row has 2/);
+  assert.match(app.el('alertArea').children[0].textContent, /Line 2 has 3 columns instead of 2/);
 });
 
 test('a stale failed read cannot replace a newer successful upload with an error', async () => {
@@ -173,5 +161,10 @@ test('a stale failed read cannot replace a newer successful upload with an error
   await app.upload('Name;Email\nNew;new@b.dk');
   reject(new Error('old file read failed')); await old;
   assert.equal(app.el('downloadBtn').disabled, false);
-  assert.doesNotMatch(app.el('alertArea').children[0].textContent, /old file read failed/);
+  assert.equal(app.el('alertArea').children.length, 0);
+});
+
+test('the interface has no delimiter, header-row or preview controls', () => {
+  const html = fs.readFileSync(new URL('../tools/csv-converter.html', `file://${__filename}`), 'utf8');
+  assert.doesNotMatch(html, /delimiterInput|startRowInput|sourcePreview|outputPreview|<select/);
 });
